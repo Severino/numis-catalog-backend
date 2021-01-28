@@ -1,0 +1,5 @@
+
+
+class Material extends Model {
+    
+}

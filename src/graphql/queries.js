@@ -1,19 +1,6 @@
 const { GraphQLObjectType, GraphQLID, GraphQLList, GraphQLNonNull, GraphQLInt, GraphQLString, graphqlSync } = require("graphql");
+const {createClient, pgp} = require("../utils/database");
 const { MaterialType } = require("./types");
-const pgPromise = require("pg-promise")
-
-const pgp = pgPromise({})
-
-function createClient() {
-    return pgp({
-        user: process.env.DB_USER,
-        host: process.env.DB_HOST,
-        database: process.env.DB_DATABASE,
-        password: process.env.DB_PASSWORD,
-        port: process.env.DB_PORT
-    })
-
-}
 
 const rootQuery = new GraphQLObjectType({
     name: "RootQueryType",

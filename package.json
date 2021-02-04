@@ -5,13 +5,17 @@
   "main": "index.js",
   "scripts": {
     "serve": "nodemon index.js",
-    "init": "node setup.js",
-    "migate": "node-pg-migrate"
+    "init": "npm i && npm run setup",
+    "setup": "node ./scripts/setup.js",
+    "migrate": "db-migrate up --config var/migrations/database.json -m var/migrations",
+    "create-migration": "db-migrate create --config 'var/migrations/database.json' -m var/migrations"
   },
   "author": "Severin Opel",
   "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
+    "db-migrate": "^0.11.12",
+    "db-migrate-pg": "^1.2.2",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-graphql": "^0.12.0",

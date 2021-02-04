@@ -1,0 +1,84 @@
+scalar Void
+
+type Material {
+  id: ID!
+  name: String!
+}
+
+input NameInput {
+  id: ID
+  name: String
+}
+
+input MintInput {
+  id: ID
+  name: String
+  location: LocationInput
+}
+
+type Location {
+  lat: Float
+  lon: Float
+}
+
+input LocationInput {
+  lat: Float
+  lon: Float
+}
+
+type Mint {
+  id: ID!
+  name: String
+  location: Location
+}
+
+type Person {
+  id: ID!
+  name: String!
+}
+
+type Title {
+  id: ID!
+  name: String!
+}
+
+type Honorific {
+  id: ID!
+  name: String!
+}
+
+type Query {
+  material: [Material]!
+  person: [Person]!
+  honorific: [Honorific]!
+  title: [Title]!
+  mint: [Mint]!
+
+  getHonorific(id: Int): Honorific
+  getMaterial(id: Int): Material
+  getMint(id: Int): Mint
+  getPerson(id: Int): Person
+  getTitle(id: Int): Title
+}
+
+type Mutation {
+  addHonorific(data: NameInput): Void
+  updateHonorific(data: NameInput): Void
+  deleteHonorific(id: Int): Void
+
+  addMaterial(data: NameInput): Void
+  updateMaterial(data: NameInput): Void
+  deleteMaterial(id: Int): Void
+
+  addMint(data: MintInput): Void
+  updateMint(data: MintInput): Void
+  deleteMint(id: Int): Void
+
+  addPerson(data: NameInput): Void
+  updatePerson(data: NameInput): Void
+  deletePerson(id: Int): Void
+
+  addTitle(data: NameInput): Void
+  updateTitle(data: NameInput): Void
+  deleteTitle(id: Int): Void
+}

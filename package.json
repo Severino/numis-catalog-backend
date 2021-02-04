@@ -4,7 +4,8 @@
   "description": "Backend for the coin collection.",
   "main": "index.js",
   "scripts": {
-    "serve": "nodemon index.js",
+    "serve": "node index.js",
+    "dev": "nodemon index.js",
     "init": "npm i && npm run setup",
     "setup": "node ./scripts/setup.js",
     "migrate": "db-migrate up --config var/migrations/database.json -m var/migrations",

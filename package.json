@@ -4,7 +4,7 @@
   "description": "Backend for the coin collection.",
   "main": "index.js",
   "scripts": {
-    "serve": "node index.js",
+    "serve": "node index.js > stdout.txt 2> stderr.txt &",
     "dev": "nodemon index.js",
     "init": "npm i && npm run setup",
     "setup": "node ./scripts/setup.js",

@@ -10,12 +10,13 @@ class MintResolver extends Resolver {
 
 
     async update(_, args) {
+        console.log(args)
         this.modifyLocation(args)
         super.update(...arguments)
     }
 
     async get(_, args) {
-        let p = await Database.one(`SELECT *,ST_X(location), ST_Y(location) FROM ${this.name} WHERE id=$1`, [args.id]).catch(console.log)
+        let p = await Database.one(`SELECT *,ST_X(geometry), ST_Y(geometry) FROM ${this.name} WHERE id=$1`, [args.id]).catch(console.log)
 
         p.location = { lat: p.st_x, lon: p.st_y }
         delete p.st_x
@@ -27,7 +28,11 @@ class MintResolver extends Resolver {
     modifyLocation(args) {
         if (args.data.location) {
             const location = args.data.location
-            args.data.location = `POINT(${location.lat} ${location.lon})`
+
+            if (location.lat == null || location.lon == null) {
+                delete args.data.location
+            } else
+                args.data.location = `POINT(${location.lat} ${location.lon})`
         }
     }
 

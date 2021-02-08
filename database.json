@@ -1,7 +1,6 @@
 {
     "dev": {
         "driver": "pg",
-        "migrations-dir": "var/migrations",
         "user": {
             "ENV": "DB_USER"
         },

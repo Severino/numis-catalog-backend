@@ -18,7 +18,8 @@ const resolverClasses = [
     new MintResolver("mint"), 
     new Resolver("title"), 
     new Resolver("person"),
-    new Resolver("honorific") 
+    new Resolver("honorific"),
+    new Resolver("nominal")
 ] 
 
 const schemaFile = loadSchemaSync("./src/graphql/schema.graphql", { loaders: [new GraphQLFileLoader()] })
@@ -26,7 +27,9 @@ const schemaFile = loadSchemaSync("./src/graphql/schema.graphql", { loaders: [ne
 app.use(cors()) 
  
 
-const resolvers = { Query: {}, Mutation: {} }
+const resolvers = { Query: {
+    ping: () => Date.now() 
+}, Mutation: {} }
 resolverClasses.forEach((resolverClass) => {
     Object.assign(resolvers.Query, resolverClass.resolvers.Query)
     Object.assign(resolvers.Mutation, resolverClass.resolvers.Mutation)

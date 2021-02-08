@@ -47,7 +47,15 @@ type Honorific {
   name: String!
 }
 
+type Nominal {
+  id:ID!
+  name: String!
+}
+
 type Query {
+  ping: String
+
+  nominal: [Nominal]!
   material: [Material]!
   person: [Person]!
   honorific: [Honorific]!
@@ -59,6 +67,7 @@ type Query {
   getMint(id: Int): Mint
   getPerson(id: Int): Person
   getTitle(id: Int): Title
+  getNominal(id: Int): Nominal
 }
 
 type Mutation {
@@ -81,4 +90,8 @@ type Mutation {
   addTitle(data: NameInput): Void
   updateTitle(data: NameInput): Void
   deleteTitle(id: Int): Void
+
+  addNominal(data: NameInput): Void
+  updateNominal(data: NameInput): Void
+  deleteNominal(id: Int): Void
 }

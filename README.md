@@ -67,10 +67,10 @@ We provide a *.env.example* file that may serves as a template for your .env fil
 
 ```ini
 PORT=4000
-DB_USER=postgres
+DB_USER=user
 DB_HOST=localhost
-DB_NAME=coins
-DB_PASSWORD=sever1234
+DB_NAME=your_database
+DB_PASSWORD=password
 DB_PORT=5432
 ```
 

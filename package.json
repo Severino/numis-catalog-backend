@@ -4,7 +4,7 @@
   "description": "Backend for the coin collection.",
   "main": "index.js",
   "scripts": {
-    "pm2": "pm2 start npm -- run start",
+    "pm2": "pm2 start node -- index.js",
     "serve": "node index.js",
     "dev": "nodemon index.js",
     "init": "npm i && npm run setup",

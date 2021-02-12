@@ -10,6 +10,7 @@
     "init": "npm i && npm run setup",
     "setup": "node ./scripts/setup.js",
     "migrate": "db-migrate up --config ./database.json -m ./migrations",
+    "migrate-down": "db-migrate down --config ./database.json -m ./migrations",
     "create-migration": "db-migrate create --config './database.json' -m ./migrations"
   },
   "author": "Severin Opel",

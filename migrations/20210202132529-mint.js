@@ -18,6 +18,7 @@ exports.up = function (db) {
   return db.createTable("mint", {
     id: { type: "int", primaryKey: true, autoIncrement: true },
     name: "string",
+    unsafe: "boolean",
     geometry: "geometry"
   });
 };

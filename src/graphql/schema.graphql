@@ -10,10 +10,10 @@ input NameInput {
   name: String
 }
 
-input MintInput {
+input PersonInput {
   id: ID
   name: String
-  location: LocationInput
+  role: String
 }
 
 type Location {
@@ -26,15 +26,24 @@ input LocationInput {
   lon: Float
 }
 
+input MintInput {
+  id: ID
+  name: String
+  location: LocationInput
+  uncertain: Boolean
+}
+
 type Mint {
   id: ID!
   name: String
   location: Location
+  uncertain: Boolean
 }
 
 type Person {
   id: ID!
   name: String!
+  role: String
 }
 
 type Title {
@@ -48,7 +57,7 @@ type Honorific {
 }
 
 type Nominal {
-  id:ID!
+  id: ID!
   name: String!
 }
 
@@ -62,12 +71,21 @@ type Query {
   title: [Title]!
   mint: [Mint]!
 
+  searchHonorific(text: String): [Honorific]
+  searchMaterial(text: String): [Material]
+  searchMint(text: String): [Mint]
+  searchPerson(text: String): [Person]
+  searchTitle(text: String): [Title]
+  searchNominal(text: String): [Nominal]
+
   getHonorific(id: Int): Honorific
   getMaterial(id: Int): Material
   getMint(id: Int): Mint
   getPerson(id: Int): Person
   getTitle(id: Int): Title
   getNominal(id: Int): Nominal
+
+  getPersonsByRole(role: String): [Person]!
 }
 
 type Mutation {
@@ -83,8 +101,8 @@ type Mutation {
   updateMint(data: MintInput): Void
   deleteMint(id: Int): Void
 
-  addPerson(data: NameInput): Void
-  updatePerson(data: NameInput): Void
+  addPerson(data: PersonInput): Void
+  updatePerson(data: PersonInput): Void
   deletePerson(id: Int): Void
 
   addTitle(data: NameInput): Void

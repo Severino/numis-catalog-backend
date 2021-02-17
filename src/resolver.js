@@ -20,6 +20,7 @@ class Resolver {
         resolvers.Mutation[`delete${this.capitalizedName}`] = this.delete.bind(this)
         resolvers.Query[`${this.name}`] = this.list.bind(this)
         resolvers.Query[`get${this.capitalizedName}`] = this.get.bind(this)
+        resolvers.Query[`search${this.capitalizedName}`] = this.search.bind(this)
         return resolvers
     }
 
@@ -48,7 +49,12 @@ class Resolver {
     async list() {
         const query = `SELECT * FROM ${this.name}`
         const result = await this.request(query)
+        console.log(this.name)
         return result || []
+    }
+
+    async search(_, args) {
+        return Database.any(`SELECT * FROM ${this.name} WHERE name ILIKE $1`, `%${args.text}%`).catch(console.log)
     }
 
     async request(query, params = []) {

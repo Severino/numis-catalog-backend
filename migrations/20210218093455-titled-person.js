@@ -15,7 +15,26 @@ exports.setup = function(options, seedLink) {
 };
 
 exports.up = function(db) {
-  return null;
+  return  db.create("titled_person", {
+    id: { type: "int", primaryKey: true, autoIncrement: true },
+    person: {
+      type: "int",
+      unsigned: true,
+      notNull: true,
+      foreignKey: {
+        name: "titledperson_person_fk",
+        table: "person",
+        mapping: "id"
+      },foreignKey: {
+        name: "titledperson_person_fk",
+        table: "person",
+        mapping: "id"
+      },foreignKey: {
+        name: "titledperson_person_fk",
+        table: "person",
+        mapping: "id"
+      }
+    });
 };
 
 exports.down = function(db) {

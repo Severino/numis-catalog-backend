@@ -9,6 +9,4 @@ const Database = pgp({
     port: process.env.DB_PORT
 })
 
-
-
 module.exports = Database

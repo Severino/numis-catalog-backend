@@ -9,6 +9,7 @@ const { graphqlHTTP } = require("express-graphql")
 const Resolver = require("./src/resolver.js")
 const MintResolver = require("./src/resolver/mintresolver.js");
 const Database = require("./src/utils/database.js");
+const PersonResolver = require("./src/resolver/personresolver.js");
 require("dotenv").config()
 
 
@@ -28,10 +29,11 @@ const resolverClasses = [
     new Resolver("material"),
     new MintResolver("mint"),
     new Resolver("title"),
-    new Resolver("person"),
+    new PersonResolver("person"),
     new Resolver("honorific"),
     new Resolver("nominal")
 ]
+
 
 
 /**
@@ -42,6 +44,9 @@ const resolvers = {
         ping: () => Date.now(),
         getPersonsByRole: function (_, args) {
             return Database.any("SELECT * FROM Person WHERE role=$1", args.role)
+        },
+        getPersonsWithRole: function(_, args){
+            return Database.any("SELECT * FROM Person WHERE role IS NOT NULL") 
         }
     }, Mutation: {}
 }

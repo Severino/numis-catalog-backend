@@ -10,7 +10,6 @@ class MintResolver extends Resolver {
 
 
     async update(_, args) {
-        console.log(args)
         this.modifyLocation(args)
         super.update(...arguments)
     }

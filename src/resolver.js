@@ -49,7 +49,6 @@ class Resolver {
     async list() {
         const query = `SELECT * FROM ${this.name}`
         const result = await this.request(query)
-        console.log(this.name)
         return result || []
     }
 

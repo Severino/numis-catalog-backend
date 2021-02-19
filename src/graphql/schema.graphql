@@ -85,6 +85,8 @@ type Query {
   getTitle(id: Int): Title
   getNominal(id: Int): Nominal
 
+  getPersonsWithRole: [Person]!
+  getPersonsWithoutRole:[Person]!
   getPersonsByRole(role: String): [Person]!
 }
 

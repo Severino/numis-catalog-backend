@@ -33,6 +33,7 @@ class Resolver {
         const object = args.data
         const id = object.id
         delete object.id
+        console.log("UPDATE..", object, object.id, id)
         const query = `UPDATE ${this.name} SET ${Object.keys(object).map((val, idx) => `${val}=$${idx + 2}`)} WHERE id=$1`
         return this.request(query, [id, ...Object.values(object)])
     }

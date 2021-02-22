@@ -15,7 +15,7 @@ exports.setup = function(options, seedLink) {
 };
 
 exports.up = function (db) {
-  return db.createTable("issuer-titles", {
+  return db.createTable("issuer_titles", {
     issuer: {
       type: "int",
       foreignKey: {
@@ -40,7 +40,7 @@ exports.up = function (db) {
 };
 
 exports.down = function (db) {
-  return db.dropTable("issuer-titles");
+  return db.dropTable("issuer_titles");
 };
 
 exports._meta = {

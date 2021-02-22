@@ -17,6 +17,7 @@ exports.setup = function (options, seedLink) {
 exports.up = function (db) {
   return db.createTable("piece", {
     id: { type: "int", primaryKey: true, autoIncrement: true },
+    piece: "string",
     type: {
       type: "int",
       foreignKey: {
@@ -24,8 +25,7 @@ exports.up = function (db) {
         table: "type",
         mapping: "id",
         rules: { onDelete: 'CASCADE', onUpdate: 'CASCADE' }
-      },
-      piece: String
+      }
     }
   });
 };

@@ -24,16 +24,18 @@ exports.up = function (db) {
         name: "overlord_type_fk",
         table: "type",
         mapping: "id",
-        rules: { onDelete: 'NO ACTION', onUpdate: 'NO ACTION' }
-      },
-      person: {
+        rules: { onDelete: 'CASCADE', onUpdate: 'CASCADE' }
+      }
+    },
+    person: {
+      type: "int",
+      foreignKey: {
         name: "overlord_person_fk",
         table: "person",
         mapping: "id",
-        rules: { onDelete: 'NO ACTION', onUpdate: 'NO ACTION' }
-      },
+        rules: { onDelete: 'RESTRICT', onUpdate: 'CASCADE' }
+      }
     },
-
   });
 };
 

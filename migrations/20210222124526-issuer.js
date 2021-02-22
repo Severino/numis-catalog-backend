@@ -21,6 +21,15 @@ exports.up = function (db) {
       primaryKey: true,
       autoIncrement: true
     },
+    type: {
+      type: "int",
+      foreignKey: {
+        name: "issuer_type_fk",
+        table: "type",
+        mapping: "id",
+        rules: { onDelete: 'CASCADE', onUpdate: 'CASCADE' }
+      }
+    },
     person: {
       type: "int",
       foreignKey: {

@@ -4,7 +4,9 @@ class SQLUtils {
     static objectifyBulk(obj, config) {
         config.forEach(conf => {
             this.objectify(obj, conf)
+            
         })
+        console.log(obj)
     }
 
     static objectify(obj, config) {

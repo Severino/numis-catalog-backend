@@ -17,8 +17,8 @@ exports.setup = function (options, seedLink) {
 exports.up = function (db) {
   return db.createTable("type", {
     id: { type: "int", primaryKey: true, autoIncrement: true },
-    projectId: { type: "int", unique: true, notNull: true },
-    treadwellId: "string",
+    project_id: { type: "string", unique: true, notNull: true },
+    treadwell_id: "string",
     mint: {
       type: "int",
       unsigned: true,
@@ -29,7 +29,7 @@ exports.up = function (db) {
         rules: { onDelete: 'RESTRICT', onUpdate: 'CASCADE' }
       }
     },
-    mintAsOnCoin: "string",
+    mint_as_on_coin: "string",
     nominal: {
       type: "int",
       unsigned: true,
@@ -39,7 +39,8 @@ exports.up = function (db) {
         mapping: "id",
         rules: { onDelete: 'RESTRICT', onUpdate: 'CASCADE' }
       }
-    }, yearOfMinting: "string",
+    },
+    year_of_mint: "string",
     donativ: "boolean",
     procedure: "string",
     caliph: {

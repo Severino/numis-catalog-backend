@@ -15,7 +15,7 @@ exports.setup = function (options, seedLink) {
 };
 
 exports.up = function (db) {
-  return db.createTable("other-person", {
+  return db.createTable("other_person", {
     type: {
       type: "int",
       foreignKey: {
@@ -24,23 +24,22 @@ exports.up = function (db) {
         mapping: "id",
         rules: { onDelete: 'CASCADE', onUpdate: 'CASCADE' }
 
-      },
-      person: {
-        type: "int",
-        foreignKey: {
-          name: "other_person_person_fk",
-          table: "person",
-          mapping: "id",
-          rules: { onDelete: 'RESTRICT', onUpdate: 'RESTRICT' }
-
-        }
+      }
+    },
+    person: {
+      type: "int",
+      foreignKey: {
+        name: "other_person_person_fk",
+        table: "person",
+        mapping: "id",
+        rules: { onDelete: 'RESTRICT', onUpdate: 'RESTRICT' }
       }
     }
   });
 };
 
 exports.down = function (db) {
-  return null;
+  return db.dropTable("other_person");
 };
 
 exports._meta = {

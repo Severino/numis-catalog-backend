@@ -41,10 +41,18 @@ type CoinSideInformation {
   misc: String
 }
 
+input CoinSideInformationInput {
+  fieldText: String
+  innerInscript: String
+  intermediateInscript: String
+  outerInscript: String
+  misc: String
+}
+
 type CoinType {
   id: ID
-  projectID: String
-  treadwellID: String
+  projectId: String
+  treadwellId: String
   mint: Mint
   mintAsOnCoin: String
   material: Material
@@ -52,12 +60,34 @@ type CoinType {
   yearOfMinting: String
   donativ: Boolean
   procedure: String
-  mintingAuthority: [TitledPerson]
+  issuer: [TitledPerson]
   overlords: [Overlord]
   otherPersons: [Person]
   caliph: Person
   avers: CoinSideInformation
   reverse: CoinSideInformation
+  cursiveScript: Boolean
+  isolatedCharacters: String
+  literature: String
+  pieces: [String]
+}
+
+input CoinTypeInput {
+  projectId: String
+  treadwellId: String
+  mint: ID
+  mintAsOnCoin: String
+  material: ID
+  nominal: ID
+  yearOfMinting: String
+  donativ: Boolean
+  procedure: String
+  issuer: [TitledPersonInput]
+  overlords: [OverlordInput]
+  otherPersons: [ID]
+  caliph: ID
+  avers: CoinSideInformationInput
+  reverse: CoinSideInformationInput
   cursiveScript: Boolean
   isolatedCharacters: String
   literature: String
@@ -75,6 +105,12 @@ type Person {
   id: ID!
   name: String!
   role: String
+}
+
+input TitledPersonInput {
+  person: ID!
+  titles: [ID]!
+  honorifics: [ID]!
 }
 
 type Title {
@@ -109,20 +145,20 @@ type Query {
   searchTitle(text: String): [Title]
   searchNominal(text: String): [Nominal]
 
-  getHonorific(id: Int): Honorific
-  getMaterial(id: Int): Material
-  getMint(id: Int): Mint
-  getPerson(id: Int): Person
-  getTitle(id: Int): Title
-  getNominal(id: Int): Nominal
+  getHonorific(id: Int!): Honorific
+  getMaterial(id: Int!): Material
+  getMint(id: Int!): Mint
+  getPerson(id: Int!): Person
+  getTitle(id: Int!): Title
+  getNominal(id: Int!): Nominal
 
   getPersonsWithRole: [Person]!
   getPersonsWithoutRole: [Person]!
   getPersonsByRole(role: String): [Person]!
 
-  getType: CoinType
+  getOverlord(id: ID!): Overlord
 
-  getOverlord(id: Int): Overlord
+  getCoinType(id: ID!): CoinType
 }
 
 type Mutation {
@@ -152,6 +188,10 @@ type Mutation {
 
   addOverlord(data: OverlordInput): Void
   removeOverlord(id: ID): Void
+
+  addCoinType(data: CoinTypeInput): Void
+  removeCoinType(id: ID): Void
+  updateCoinType(data: CoinTypeInput): Void
 }
 
 type Overlord {
@@ -170,7 +210,7 @@ type TitledPerson {
 }
 
 input OverlordInput {
-  type: ID!
+  type: ID
   person: ID!
   rank: Int!
   titles: [Int]!

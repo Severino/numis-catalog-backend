@@ -6,7 +6,7 @@
   "scripts": {
     "pm2": "pm2 start node -- index.js",
     "serve": "node index.js",
-    "dev": "nodemon index.js",
+    "dev": "nodemon index.js --ext js,graphql",
     "init": "npm i && npm run setup",
     "setup": "node ./scripts/setup.js",
     "migrate": "db-migrate up --config ./database.json -m ./migrations",

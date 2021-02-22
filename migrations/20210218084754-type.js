@@ -15,7 +15,7 @@ exports.setup = function (options, seedLink) {
 };
 
 exports.up = function (db) {
-  return db.create("type", {
+  return db.createTable("type", {
     id: { type: "int", primaryKey: true, autoIncrement: true },
     projectId: { type: "int", unique: true, notNull: true },
     treadwellId: "string",
@@ -25,7 +25,8 @@ exports.up = function (db) {
       foreignKey: {
         name: "type_mint_fk",
         table: "mint",
-        mapping: "id"
+        mapping: "id",
+        rules: { onDelete: 'RESTRICT', onUpdate: 'CASCADE' }
       }
     },
     mintAsOnCoin: "string",
@@ -35,16 +36,19 @@ exports.up = function (db) {
       foreignKey: {
         name: "type_nominal_fk",
         table: "nominal",
-        mapping: "id"
+        mapping: "id",
+        rules: { onDelete: 'RESTRICT', onUpdate: 'CASCADE' }
       }
-    }, year_of_mint: "string",
+    }, yearOfMinting: "string",
     donativ: "boolean",
     procedure: "string",
     caliph: {
+      type: "int",
       foreignKey: {
         name: "type_person_caliph_fk",
         table: "person",
-        mapping: "id"
+        mapping: "id",
+        rules: { onDelete: 'RESTRICT', onUpdate: 'CASCADE' }
       }
     },
     front_side_field_text: "string",

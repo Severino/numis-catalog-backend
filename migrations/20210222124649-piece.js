@@ -15,30 +15,23 @@ exports.setup = function (options, seedLink) {
 };
 
 exports.up = function (db) {
-  return db.create("titled_person", {
+  return db.createTable("piece", {
     id: { type: "int", primaryKey: true, autoIncrement: true },
-    person: {
+    type: {
       type: "int",
-      unsigned: true,
-      notNull: true,
       foreignKey: {
-        name: "titledperson_person_fk",
-        table: "person",
-        mapping: "id"
-      }, foreignKey: {
-        name: "titledperson_person_fk",
-        table: "person",
-        mapping: "id"
-      }, foreignKey: {
-        name: "titledperson_person_fk",
-        table: "person",
-        mapping: "id"
-      }
-    });
+        name: "piece_type_fk",
+        table: "type",
+        mapping: "id",
+        rules: { onDelete: 'CASCADE', onUpdate: 'CASCADE' }
+      },
+      piece: String
+    }
+  });
 };
 
 exports.down = function (db) {
-  return null;
+  return db.dropTable("piece");
 };
 
 exports._meta = {

@@ -33,6 +33,37 @@ input MintInput {
   uncertain: Boolean
 }
 
+type CoinSideInformation {
+  fieldText: String
+  innerInscript: String
+  intermediateInscript: String
+  outerInscript: String
+  misc: String
+}
+
+type CoinType {
+  id: ID
+  projectID: String
+  treadwellID: String
+  mint: Mint
+  mintAsOnCoin: String
+  material: Material
+  nominal: Nominal
+  yearOfMinting: String
+  donativ: Boolean
+  procedure: String
+  mintingAuthority: [TitledPerson]
+  overlords: [Overlord]
+  otherPersons: [Person]
+  caliph: Person
+  avers: CoinSideInformation
+  reverse: CoinSideInformation
+  cursiveScript: Boolean
+  isolatedCharacters: String
+  literature: String
+  pieces: [String]
+}
+
 type Mint {
   id: ID!
   name: String
@@ -86,8 +117,12 @@ type Query {
   getNominal(id: Int): Nominal
 
   getPersonsWithRole: [Person]!
-  getPersonsWithoutRole:[Person]!
+  getPersonsWithoutRole: [Person]!
   getPersonsByRole(role: String): [Person]!
+
+  getType: CoinType
+
+  getOverlord(id: Int): Overlord
 }
 
 type Mutation {
@@ -114,4 +149,30 @@ type Mutation {
   addNominal(data: NameInput): Void
   updateNominal(data: NameInput): Void
   deleteNominal(id: Int): Void
+
+  addOverlord(data: OverlordInput): Void
+  removeOverlord(id: ID): Void
+}
+
+type Overlord {
+  id: ID
+  person: Person
+  titles: [Title]
+  honorifics: [Honorific]
+  rank: Int
+}
+
+type TitledPerson {
+  id: ID
+  person: Person
+  titles: [String]
+  honorifics: [String]
+}
+
+input OverlordInput {
+  type: ID!
+  person: ID!
+  rank: Int!
+  titles: [Int]!
+  honorifics: [Int]!
 }

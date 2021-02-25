@@ -1,0 +1,41 @@
+mutation {
+  addCoinType(
+    data: {
+      projectId: "PROJECT_ID"
+      treadwellId: "TREADWELL_ID"
+      mint: 5
+      mintAsOnCoin: "ASDjkl asdASD JK"
+      material: 5
+      nominal: 5
+      yearOfMinting: "9x6"
+      donativ: true
+      procedure: "cast"
+      issuers: [{ person: 12, titles: [3, 4, 5], honorifics: [11, 13, 14] }]
+      overlords: [
+        { person: 10, rank: 1, titles: [3, 4, 5], honorifics: [11, 13, 14] }
+        { person: 11, rank: 2, titles: [3, 4, 5], honorifics: [11, 13, 14] }
+        { person: 13, rank: 3, titles: [3, 4, 5], honorifics: [11, 13, 14] }
+      ]
+      otherPersons: [5, 13, 12]
+      caliph: 6
+      avers: {
+        fieldText: "AVERSFIELD"
+        innerInscript: "INNERSCRIPT"
+        intermediateInscript: "INTERMEDSCRIPT"
+        outerInscript: "OUTERSCRIPT"
+        misc: "MISC"
+      }
+      reverse: {
+        fieldText: "AVERSFIELD"
+        innerInscript: "INNERSCRIPT"
+        intermediateInscript: "INTERMEDSCRIPT"
+        outerInscript: "OUTERSCRIPT"
+        misc: "MISC"
+      }
+      cursiveScript: true
+      isolatedCharacters: "a,b,c"
+      literature: "<h1>HalloWelt</h1>"
+      pieces: ["alpha", "beta", "gamma"]
+    }
+  )
+}

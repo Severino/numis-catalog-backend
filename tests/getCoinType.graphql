@@ -1,0 +1,78 @@
+{
+            getCoinType(id:25){
+                id
+                projectId
+                treadwellId
+                mint {
+                  id
+                }
+                mintAsOnCoin
+                material {
+                  id
+                }
+                nominal {
+                  id
+                }
+                yearOfMinting
+                donativ
+                procedure
+                issuers {
+                  id
+                  person {
+                    id,
+                    name,
+                    role
+                  }
+                  titles {
+                    id,
+                    name
+                  }
+                  honorifics{
+                    id,
+                    name}
+                }
+                overlords {
+                  id
+                  person {
+                    id,
+                    name,
+                    role
+                  }
+                  titles {
+                    id,
+                    name
+                  }
+                  honorifics{
+                    id,
+                    name}
+                }
+                otherPersons {
+                  id
+                  name
+                  role
+                }
+                caliph {
+                  id
+                  name
+                  role
+                }
+                avers {
+                  fieldText
+                  innerInscript
+                  intermediateInscript
+                  outerInscript
+                  misc
+                }
+                reverse {
+                  fieldText
+                  innerInscript
+                  intermediateInscript
+                  outerInscript
+                  misc
+                }
+                cursiveScript
+                isolatedCharacters
+                literature
+                pieces 
+        }
+      }

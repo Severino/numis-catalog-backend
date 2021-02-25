@@ -51,134 +51,23 @@ const resolvers = {
             return Database.any("SELECT * FROM Person WHERE role IS NOT NULL")
         },
         getOverlord: function (_, args) {
-            return getOverlord(args.id)
+            return Type.getOverlord(args.id)
+        },
+        getReducedCoinTypeList: async function () {
+            return Type.getTypesReducedList()
         },
         getCoinType: async function (_, args) {
-            const result = await Database.any(`
-            SELECT t.*, m.id AS mint_id, m.name AS mint_name, n.id AS nominal_id, n.name AS nominal_name, p.id AS caliph_id, p.name AS caliph_name FROM type t 
-            JOIN mint m 
-            ON t.mint = m.id
-            JOIN nominal n 
-            ON t.mint = n.id
-            JOIN person p
-            ON t.caliph = p.id
-            WHERE t.id=1
-            `, args.id)
-
-            const type = result[0]
-
-            const config = [
-                {
-                    prefix: "mint_",
-                    target: "mint",
-                    keys: ["id", "name"]
-                },
-                {
-                    prefix: "nominal_",
-                    target: "nominal",
-                    keys: ["id", "name"]
-                },
-                {
-                    prefix: "caliph_",
-                    target: "caliph",
-                    keys: ["id", "name"]
-                }
-            ]
-
-            config.forEach(conf => delete type[conf.target])
-            SQLUtils.objectifyBulk(type, config)
-
-            SQLUtils.getOverlord()
-
+            return Type.getType(args.id)
         }
     }, Mutation: {
         addCoinType: async function (_, args) {
-            const data = args.data
-
-            data.front_side_field_text = data.avers.fieldText
-            data.front_side_inner_inscript = data.avers.innerInscription
-            data.front_side_intermediate_inscript = data.avers.intermediateInscription
-            data.front_side_outer_inscript = data.avers.outerInscription
-            data.front_side_misc = data.avers.misc
-            data.back_side_field_text = data.reverse.fieldText
-            data.back_side_inner_inscript = data.reverse.innerInscription
-            data.back_side_intermediate_inscript = data.reverse.intermediateInscription
-            data.back_side_outer_inscript = data.reverse.outerInscription
-            data.back_side_misc = data.reverse.misc
-
-
-            const result = await Database.any(`
-            INSERT INTO type (
-                project_id, 
-                treadwell_id, 
-                mint, 
-                mint_as_on_coin, 
-                nominal, 
-                year_of_mint, 
-                donativ, 
-                procedure, 
-                caliph,
-                front_side_field_text,
-                front_side_inner_inscript,
-                front_side_intermediate_inscript,
-                front_side_outer_inscript,
-                front_side_misc,
-                back_side_field_text,
-                back_side_inner_inscript,
-                back_side_intermediate_inscript,
-                back_side_outer_inscript,
-                back_side_misc,
-                cursive_script,
-                isolated_characters,
-                literature
-                )  VALUES (
-               $[projectId],
-               $[treadwellId],
-               $[mint],
-               $[mintAsOnCoin],
-               $[nominal],
-               $[yearOfMinting],
-               $[donativ],
-               $[procedure],
-               $[caliph],
-               $[front_side_field_text],
-               $[front_side_inner_inscript],
-               $[front_side_intermediate_inscript],
-               $[front_side_outer_inscript],
-               $[front_side_misc],
-               $[back_side_field_text],
-               $[back_side_inner_inscript],
-               $[back_side_intermediate_inscript],
-               $[back_side_outer_inscript],
-               $[back_side_misc],
-               $[cursiveScript],
-               $[isolatedCharacters],
-               $[literature]
-                ) RETURNING *
-            `, data)
-
-            const type = result[0]
-            const id = type.id
-
-            for (const overlord of data.overlords) {
-                overlord.type = id
-                console.log(overlord.titles)
-                await Type.addOverlord(overlord).catch(console.log)
-            }
-
-            // for (const issuer of data.issuer) {
-            //     issuer.type = id
-            //     await Type.addIssuer(issuer).catch(console.log)
-            // }
-
-            // for (const personId of data.otherPersons) {
-            //     await Database.any("INSERT INTO other_person (type, person) VALUES ($[typeId], $[personId])", { typeId: id, personId }).catch(console.log)
-            // }
-
-            // for (const piece of data.pieces) {
-            //     await Database.any("INSERT INTO piece (type, piece) VALUES($[typeId], $[piece])", { typeId: id, piece }).catch(console.log)
-            // }
-        }, addOverlord(_, args) {
+            if (args.data.id) delete args.data.id
+            return Type.addType(args.data)
+        },
+        updateCoinType(_,args) {
+            return Type.updateType(args.id, args.data)
+        },
+        addOverlord(_, args) {
             return Type.addOverlord(args.data)
         }
 

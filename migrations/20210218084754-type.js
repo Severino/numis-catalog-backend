@@ -19,6 +19,16 @@ exports.up = function (db) {
     id: { type: "int", primaryKey: true, autoIncrement: true },
     project_id: { type: "string", unique: true, notNull: true },
     treadwell_id: "string",
+    material: {
+      type: "int",
+      unsigned: true,
+      foreignKey: {
+        name: "type_material_fk",
+        table: "material",
+        mapping: "id",
+        rules: { onDelete: 'RESTRICT', onUpdate: 'CASCADE' }
+      }
+    },
     mint: {
       type: "int",
       unsigned: true,

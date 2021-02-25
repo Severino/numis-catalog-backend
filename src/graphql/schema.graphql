@@ -49,6 +49,12 @@ input CoinSideInformationInput {
   misc: String
 }
 
+type ReducedCoinType {
+  id: ID
+  projectId: String
+  treadwellId: String
+}
+
 type CoinType {
   id: ID
   projectId: String
@@ -60,7 +66,7 @@ type CoinType {
   yearOfMinting: String
   donativ: Boolean
   procedure: String
-  issuer: [TitledPerson]
+  issuers: [TitledPerson]
   overlords: [Overlord]
   otherPersons: [Person]
   caliph: Person
@@ -73,16 +79,17 @@ type CoinType {
 }
 
 input CoinTypeInput {
+  id: ID
   projectId: String
   treadwellId: String
   mint: ID
   mintAsOnCoin: String
   material: ID
-  nominal: ID
+  nominal: Int
   yearOfMinting: String
   donativ: Boolean
   procedure: String
-  issuer: [TitledPersonInput]
+  issuers: [TitledPersonInput]
   overlords: [OverlordInput]
   otherPersons: [ID]
   caliph: ID
@@ -158,6 +165,7 @@ type Query {
 
   getOverlord(id: ID!): Overlord
 
+  getReducedCoinTypeList(id: ID): [ReducedCoinType]
   getCoinType(id: ID!): CoinType
 }
 
@@ -191,22 +199,22 @@ type Mutation {
 
   addCoinType(data: CoinTypeInput): Void
   removeCoinType(id: ID): Void
-  updateCoinType(data: CoinTypeInput): Void
+  updateCoinType(id:ID, data: CoinTypeInput): Void
 }
 
 type Overlord {
   id: ID
   person: Person
-  titles: [Title]
-  honorifics: [Honorific]
+  titles: [Title]!
+  honorifics: [Honorific]!
   rank: Int
 }
 
 type TitledPerson {
   id: ID
   person: Person
-  titles: [String]
-  honorifics: [String]
+  titles: [Title]!
+  honorifics: [Honorific]!
 }
 
 input OverlordInput {

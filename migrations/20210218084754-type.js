@@ -17,7 +17,7 @@ exports.setup = function (options, seedLink) {
 exports.up = function (db) {
   return db.createTable("type", {
     id: { type: "int", primaryKey: true, autoIncrement: true },
-    project_id: { type: "string", unique: true, notNull: true },
+    project_id: "string",
     treadwell_id: "string",
     material: {
       type: "int",

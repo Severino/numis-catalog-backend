@@ -1,5 +1,9 @@
 require("dotenv").config()
-const pgp = require("pg-promise")()
+const pgp = require("pg-promise")({
+    query: function (e) {
+        console.log(e.query); // log the query being executed
+    }
+})
 
 const Database = pgp({
     user: process.env.DB_USER,
@@ -9,4 +13,4 @@ const Database = pgp({
     port: process.env.DB_PORT
 })
 
-module.exports = Database 
+module.exports = { Database, pgp } 

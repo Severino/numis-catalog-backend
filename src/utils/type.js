@@ -1,7 +1,8 @@
 const { request } = require("express")
 const { default: db } = require("node-pg-migrate/dist/db")
+const pgPromise = require("pg-promise")
 const { result } = require("./database")
-const Database = require("./database")
+const { Database, pgp } = require("./database")
 const SQLUtils = require("./sql")
 
 class Type {
@@ -43,6 +44,7 @@ class Type {
         return Promise.all(promises)
     }
 
+
     static async updateType(id, data) {
         if (!id) return Promise.reject("id is required for update.")
         /** UGLY BECAUSE OF NO TIME #cheers */
@@ -59,34 +61,33 @@ class Type {
 
 
 
-
-        const query = `
-        UPDATE type SET
-            project_id =  ${data.projectId || null}, 
-            treadwell_id =  ${data.treadwellId || null}, 
-            material =  ${data.material || null},
-            mint =  ${data.mint || null}, 
-            mint_as_on_coin =  ${data.mintAsOnCoin || null}, 
-            nominal =  ${data.nominal || null}, 
-            year_of_mint =  ${data.yearOfMinting || null}, 
-            donativ =  ${data.donativ || false}, 
-            procedure =  ${data.procedure || "cast"}, 
-            caliph =  ${data.caliph || null},
-            front_side_field_text =  ${data.front_side_field_text || null},
-            front_side_inner_inscript =  ${data.front_side_inner_inscript || null},
-            front_side_intermediate_inscript =  ${data.front_side_intermediate_inscript || null},
-            front_side_outer_inscript =  ${data.front_side_outer_inscript || null},
-            front_side_misc =  ${data.front_side_misc || null},
-            back_side_field_text =  ${data.back_side_field_text || null},
-            back_side_inner_inscript =  ${data.back_side_inner_inscript || null},
-            back_side_intermediate_inscript =  ${data.back_side_intermediate_inscript || null},
-            back_side_outer_inscript =  ${data.back_side_outer_inscript || null},
-            back_side_misc =  ${data.back_side_misc || null},
-            cursive_script =  ${data.cursiveScript || false},
-            isolated_characters =  ${data.isolatedCharacters || null},
-            literature  = ${data.literature || null}
-            WHERE id = ${id} 
-        `
+        // const query = `
+        // UPDATE type SET
+        //     project_id =  ${data.projectId || null}, 
+        //     treadwell_id =  ${data.treadwellId || null}, 
+        //     material =  ${data.material || null},
+        //     mint =  ${data.mint || null}, 
+        //     mint_as_on_coin =  ${data.mintAsOnCoin || null}, 
+        //     nominal =  ${data.nominal || null}, 
+        //     year_of_mint =  ${data.yearOfMinting || null}, 
+        //     donativ =  ${data.donativ || false}, 
+        //     procedure =  ${data.procedure || "cast"}, 
+        //     caliph =  ${data.caliph || null},
+        //     front_side_field_text =  ${data.front_side_field_text || null},
+        //     front_side_inner_inscript =  ${data.front_side_inner_inscript || null},
+        //     front_side_intermediate_inscript =  ${data.front_side_intermediate_inscript || null},
+        //     front_side_outer_inscript =  ${data.front_side_outer_inscript || null},
+        //     front_side_misc =  ${data.front_side_misc || null},
+        //     back_side_field_text =  ${data.back_side_field_text || null},
+        //     back_side_inner_inscript =  ${data.back_side_inner_inscript || null},
+        //     back_side_intermediate_inscript =  ${data.back_side_intermediate_inscript || null},
+        //     back_side_outer_inscript =  ${data.back_side_outer_inscript || null},
+        //     back_side_misc =  ${data.back_side_misc || null},
+        //     cursive_script =  ${data.cursiveScript || false},
+        //     isolated_characters =  ${data.isolatedCharacters || null},
+        //     literature  = ${data.literature || null}
+        //     WHERE id = ${id} 
+        // `
 
         await Database.any(`
         UPDATE type 
@@ -117,20 +118,26 @@ class Type {
             WHERE id = $[id] 
         `, Object.assign({ id }, data))
 
+
+        Database.any("DELETE FROM overlord WHERE type=$1", id)
         for (const overlord of data.overlords) {
             overlord.type = id
             await Type.addOverlord(overlord).catch(console.log)
         }
 
+        Database.any("DELETE FROM issuer WHERE type=$1", id)
         for (const issuer of data.issuers) {
             issuer.type = id
             await Type.addIssuer(issuer).catch(console.log)
         }
 
+        Database.any("DELETE FROM other_person WHERE type=$1", id)
         for (const personId of data.otherPersons) {
             await Database.any("INSERT INTO other_person (type, person) VALUES ($[typeId], $[personId])", { typeId: id, personId }).catch(console.log)
         }
 
+
+        Database.any("DELETE FROM piece WHERE type=$1", id)
         for (const piece of data.pieces) {
             await Database.any("INSERT INTO piece (type, piece) VALUES($[typeId], $[piece])", { typeId: id, piece }).catch(console.log)
         }
@@ -154,80 +161,105 @@ class Type {
         data.back_side_misc = data.reverse.misc
 
 
-        const result = await Database.any(`
-        INSERT INTO type (
-            project_id, 
-            treadwell_id, 
-            material,
-            mint, 
-            mint_as_on_coin, 
-            nominal, 
-            year_of_mint, 
-            donativ, 
-            procedure, 
-            caliph,
-            front_side_field_text,
-            front_side_inner_inscript,
-            front_side_intermediate_inscript,
-            front_side_outer_inscript,
-            front_side_misc,
-            back_side_field_text,
-            back_side_inner_inscript,
-            back_side_intermediate_inscript,
-            back_side_outer_inscript,
-            back_side_misc,
-            cursive_script,
-            isolated_characters,
-            literature
-            )  VALUES (
-           $[projectId],
-           $[treadwellId],
-           $[material],
-           $[mint],
-           $[mintAsOnCoin],
-           $[nominal],
-           $[yearOfMinting],
-           $[donativ],
-           $[procedure],
-           $[caliph],
-           $[front_side_field_text],
-           $[front_side_inner_inscript],
-           $[front_side_intermediate_inscript],
-           $[front_side_outer_inscript],
-           $[front_side_misc],
-           $[back_side_field_text],
-           $[back_side_inner_inscript],
-           $[back_side_intermediate_inscript],
-           $[back_side_outer_inscript],
-           $[back_side_misc],
-           $[cursiveScript],
-           $[isolatedCharacters],
-           $[literature]
-            ) RETURNING *
-        `, data)
+        return Database.tx(async t => {
 
-        const type = result[0]
-        const id = type.id
+            const query = await t.one(`
+            INSERT INTO type (
+                project_id, 
+                treadwell_id, 
+                material,
+                mint, 
+                mint_as_on_coin, 
+                nominal, 
+                year_of_mint, 
+                donativ, 
+                procedure, 
+                caliph,
+                front_side_field_text,
+                front_side_inner_inscript,
+                front_side_intermediate_inscript,
+                front_side_outer_inscript,
+                front_side_misc,
+                back_side_field_text,
+                back_side_inner_inscript,
+                back_side_intermediate_inscript,
+                back_side_outer_inscript,
+                back_side_misc,
+                cursive_script,
+                isolated_characters,
+                literature
+                )  VALUES (
+               $[projectId],
+               $[treadwellId],
+               $[material],
+               $[mint],
+               $[mintAsOnCoin],
+               $[nominal],
+               $[yearOfMinting],
+               $[donativ],
+               $[procedure],
+               $[caliph],
+               $[front_side_field_text],
+               $[front_side_inner_inscript],
+               $[front_side_intermediate_inscript],
+               $[front_side_outer_inscript],
+               $[front_side_misc],
+               $[back_side_field_text],
+               $[back_side_inner_inscript],
+               $[back_side_intermediate_inscript],
+               $[back_side_outer_inscript],
+               $[back_side_misc],
+               $[cursiveScript],
+               $[isolatedCharacters],
+               $[literature]
+                ) RETURNING id
+            `, data)
 
-        for (const overlord of data.overlords) {
-            overlord.type = id
-            await Type.addOverlord(overlord).catch(console.log)
-        }
+            const type = query.id
+            const subqueries = []
 
-        for (const issuer of data.issuers) {
-            issuer.type = id
-            await Type.addIssuer(issuer).catch(console.log)
-        }
+            const overlord_queries = data.overlords.map(overlord => {
+                overlord.type = +type
+                overlord.rank = +overlord.rank
+                return t.one(pgp.helpers.insert(overlord, ["rank", "type", "person"], "overlord") + " RETURNING id").then(overlord_row => {
+                    const overlord_id = overlord_row.id
+                    const title_queries = overlord.titles.map(title => t.none("INSERT INTO overlord_titles(overlord_id, title_id) VALUES($1, $2)", [overlord_id, title]))
+                    const honorific_queries = overlord.honorifics.map(honorific => t.none("INSERT INTO overlord_honorifics(overlord_id, honorific_id) VALUES($1, $2)", [overlord_id, honorific]))
+                    subqueries.push(...title_queries, ...honorific_queries)
+                }).catch((insert_overlord_error) => {
+                    console.log("insert_overlord_error:", insert_overlord_error)
+                })
+            })
 
-        for (const personId of data.otherPersons) {
-            await Database.any("INSERT INTO other_person (type, person) VALUES ($[typeId], $[personId])", { typeId: id, personId }).catch(console.log)
-        }
+            const issuer_queries = data.issuers.map(issuer => {
+                issuer.type = +type
+                return t.one(pgp.helpers.insert(issuer, ["type", "person"], "issuer") + " RETURNING id").then(issuer_row => {
+                    const issuer_id = issuer_row.id
+                    const title_queries = issuer.titles.map(title => t.none("INSERT INTO issuer_titles(issuer, title) VALUES($1, $2)", [issuer_id, title]))
+                    const honorific_queries = issuer.honorifics.map(honorific => t.none("INSERT INTO issuer_honorifics(issuer, honorific) VALUES($1, $2)", [issuer_id, honorific]))
+                    subqueries.push(...title_queries, ...honorific_queries)
+                }).catch((insert_issuer_error) => {
+                    console.log("insert_issuer_error:", insert_issuer_error)
+                })
+            })
 
-        for (const piece of data.pieces) {
-            await Database.any("INSERT INTO piece (type, piece) VALUES($[typeId], $[piece])", { typeId: id, piece }).catch(console.log)
-        }
+            const other_persons = data.otherPersons.map(otherPerson =>{
+                return t.none("INSERT INTO other_person (person, type) VALUES ($1,$2)", [otherPerson, type])
+            })
 
-        return null
+            const pieces = data.pieces.map(piece =>{
+                return t.none("INSERT INTO piece (piece, type) VALUES ($1,$2)", [piece, type])
+            })
+
+
+            await t.batch(overlord_queries)
+            await t.batch(issuer_queries)
+            await t.batch(other_persons)
+            await t.batch(pieces)
+            await t.batch(subqueries)
+
+            return query
+        })
     }
 
     static async getTypesReducedList() {

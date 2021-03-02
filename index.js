@@ -8,7 +8,7 @@ const { graphqlHTTP } = require("express-graphql")
 
 const Resolver = require("./src/resolver.js")
 const MintResolver = require("./src/resolver/mintresolver.js");
-const Database = require("./src/utils/database.js");
+const {Database} = require("./src/utils/database.js");
 const PersonResolver = require("./src/resolver/personresolver.js");
 const SQLUtils = require("./src/utils/sql.js");
 const Type = require("./src/utils/type.js");

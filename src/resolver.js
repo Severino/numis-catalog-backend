@@ -1,4 +1,4 @@
-const Database = require("./utils/database.js")
+const {Database} = require("./utils/database.js")
 
 class Resolver {
 

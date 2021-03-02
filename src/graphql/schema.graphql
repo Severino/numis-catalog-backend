@@ -59,17 +59,17 @@ type CoinType {
   id: ID
   projectId: String
   treadwellId: String
-  mint: Mint
+  mint: Mint 
   mintAsOnCoin: String
-  material: Material
-  nominal: Nominal
+  material: Material 
+  nominal: Nominal 
   yearOfMinting: String
   donativ: Boolean
   procedure: String
   issuers: [TitledPerson]
   overlords: [Overlord]
   otherPersons: [Person]
-  caliph: Person
+  caliph: Person 
   avers: CoinSideInformation
   reverse: CoinSideInformation
   cursiveScript: Boolean
@@ -85,7 +85,7 @@ input CoinTypeInput {
   mint: ID
   mintAsOnCoin: String
   material: ID
-  nominal: Int
+  nominal: ID
   yearOfMinting: String
   donativ: Boolean
   procedure: String

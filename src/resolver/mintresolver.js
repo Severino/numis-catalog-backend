@@ -1,5 +1,5 @@
 const Resolver = require("../resolver.js")
-const Database = require("../utils/database.js")
+const {Database} = require("../utils/database.js")
 
 class MintResolver extends Resolver {
 

@@ -10,8 +10,10 @@ class SQLUtils {
     static objectify(obj, config) {
         obj[config.target] = {}
         config.keys.forEach(key => {
-            obj[config.target][key] = obj[config.prefix + key]
-            delete obj[config.prefix + key]
+            if (obj[config.prefix + key]) {
+                obj[config.target][key] = obj[config.prefix + key]
+                delete obj[config.prefix + key]
+            }
         })
     }
 
@@ -24,11 +26,13 @@ class SQLUtils {
     static listify(obj, config) {
         obj[config.target] = []
         config.keys.forEach((key, key_num) => {
-            obj[config.prefix + key].forEach((entry, i) => {
-                if (!obj[config.target][i]) obj[config.target].push({})
-                obj[config.target][i][config.to[key_num]] = entry
-            })
-            delete obj[config.prefix + key]
+            if (obj[config.prefix + key]) {
+                obj[config.prefix + key].forEach((entry, i) => {
+                    if (!obj[config.target][i]) obj[config.target].push({})
+                    obj[config.target][i][config.to[key_num]] = entry
+                })
+                delete obj[config.prefix + key]
+            }
         })
     }
 }

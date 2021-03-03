@@ -8,7 +8,7 @@ const { graphqlHTTP } = require("express-graphql")
 
 const Resolver = require("./src/resolver.js")
 const MintResolver = require("./src/resolver/mintresolver.js");
-const {Database} = require("./src/utils/database.js");
+const { Database } = require("./src/utils/database.js");
 const PersonResolver = require("./src/resolver/personresolver.js");
 const SQLUtils = require("./src/utils/sql.js");
 const Type = require("./src/utils/type.js");
@@ -44,12 +44,6 @@ const resolverClasses = [
 const resolvers = {
     Query: {
         ping: () => Date.now(),
-        getPersonsByRole: function (_, args) {
-            return Database.any("SELECT * FROM Person WHERE role=$1", args.role)
-        },
-        getPersonsWithRole: function (_, args) {
-            return Database.any("SELECT * FROM Person WHERE role IS NOT NULL")
-        },
         getOverlord: function (_, args) {
             return Type.getOverlord(args.id)
         },
@@ -58,13 +52,23 @@ const resolvers = {
         },
         getCoinType: async function (_, args) {
             return Type.getType(args.id)
+        },
+        searchPersonsWithRole: async function (_, args) {
+            const searchString = args.text
+            const additionalFilter = args.filter || []
+            const filter = [" ", ...additionalFilter]
+            return Database.any(`SELECT * FROM person WHERE role IS NOT NULL AND (role IN ($2:csv)) IS NOT true AND unaccent(name) ILIKE $1 ORDER BY name ASC`, [`%${searchString}%`, filter]).catch(console.log)
+        },
+        searchPersonsWithoutRole: async function (_, args) {
+            const searchString = args.text
+            return Database.any(`SELECT * FROM person WHERE (role IS NULL OR role=' ') AND unaccent(name) ILIKE $1 ORDER BY name ASC`, `%${searchString}%`).catch(console.log)
         }
     }, Mutation: {
         addCoinType: async function (_, args) {
-            if (args.data.id) delete args.data.id
             return Type.addType(args.data)
         },
-        updateCoinType(_,args) {
+        updateCoinType(_, args) {
+            console.log(args)
             return Type.updateType(args.id, args.data)
         },
         addOverlord(_, args) {

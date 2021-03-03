@@ -22,7 +22,7 @@ exports.up = function (db) {
         name: "ih_issuer_fk",
         table: "issuer",
         mapping: "id",
-        rules: { onDelete: 'RESTRICT', onUpdate: 'CASCADE' }
+        rules: { onDelete: 'CASCADE', onUpdate: 'CASCADE' }
       }
     },
     honorific: {

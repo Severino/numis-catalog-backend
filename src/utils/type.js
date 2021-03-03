@@ -1,7 +1,4 @@
 const { request } = require("express")
-const { default: db } = require("node-pg-migrate/dist/db")
-const pgPromise = require("pg-promise")
-const { result } = require("./database")
 const { Database, pgp } = require("./database")
 const SQLUtils = require("./sql")
 
@@ -59,37 +56,9 @@ class Type {
         data.back_side_outer_inscript = data.reverse.outerInscript
         data.back_side_misc = data.reverse.misc
 
+        return Database.tx(async t => {
 
-
-        // const query = `
-        // UPDATE type SET
-        //     project_id =  ${data.projectId || null}, 
-        //     treadwell_id =  ${data.treadwellId || null}, 
-        //     material =  ${data.material || null},
-        //     mint =  ${data.mint || null}, 
-        //     mint_as_on_coin =  ${data.mintAsOnCoin || null}, 
-        //     nominal =  ${data.nominal || null}, 
-        //     year_of_mint =  ${data.yearOfMinting || null}, 
-        //     donativ =  ${data.donativ || false}, 
-        //     procedure =  ${data.procedure || "cast"}, 
-        //     caliph =  ${data.caliph || null},
-        //     front_side_field_text =  ${data.front_side_field_text || null},
-        //     front_side_inner_inscript =  ${data.front_side_inner_inscript || null},
-        //     front_side_intermediate_inscript =  ${data.front_side_intermediate_inscript || null},
-        //     front_side_outer_inscript =  ${data.front_side_outer_inscript || null},
-        //     front_side_misc =  ${data.front_side_misc || null},
-        //     back_side_field_text =  ${data.back_side_field_text || null},
-        //     back_side_inner_inscript =  ${data.back_side_inner_inscript || null},
-        //     back_side_intermediate_inscript =  ${data.back_side_intermediate_inscript || null},
-        //     back_side_outer_inscript =  ${data.back_side_outer_inscript || null},
-        //     back_side_misc =  ${data.back_side_misc || null},
-        //     cursive_script =  ${data.cursiveScript || false},
-        //     isolated_characters =  ${data.isolatedCharacters || null},
-        //     literature  = ${data.literature || null}
-        //     WHERE id = ${id} 
-        // `
-
-        await Database.any(`
+            const query = await t.none(`
         UPDATE type 
         SET
             project_id = $[projectId],
@@ -116,36 +85,69 @@ class Type {
             isolated_characters = $[isolatedCharacters],
             literature = $[literature]
             WHERE id = $[id] 
-        `, Object.assign({ id }, data))
+        `, Object.assign({ id }, data)).catch(console.log)
 
 
-        Database.any("DELETE FROM overlord WHERE type=$1", id)
-        for (const overlord of data.overlords) {
-            overlord.type = id
-            await Type.addOverlord(overlord).catch(console.log)
-        }
+            await t.none("DELETE FROM overlord WHERE type=$1", id).catch(console.log)
+            await t.none("DELETE FROM issuer WHERE type=$1", id).catch(console.log)
+            await t.none("DELETE FROM other_person WHERE type=$1", id).catch(console.log)
+            await t.none("DELETE FROM piece WHERE type=$1", id).catch(console.log)
 
-        Database.any("DELETE FROM issuer WHERE type=$1", id)
-        for (const issuer of data.issuers) {
-            issuer.type = id
-            await Type.addIssuer(issuer).catch(console.log)
-        }
-
-        Database.any("DELETE FROM other_person WHERE type=$1", id)
-        for (const personId of data.otherPersons) {
-            await Database.any("INSERT INTO other_person (type, person) VALUES ($[typeId], $[personId])", { typeId: id, personId }).catch(console.log)
-        }
+            const type = id
+            const subqueries = []
 
 
-        Database.any("DELETE FROM piece WHERE type=$1", id)
-        for (const piece of data.pieces) {
-            await Database.any("INSERT INTO piece (type, piece) VALUES($[typeId], $[piece])", { typeId: id, piece }).catch(console.log)
-        }
 
-        return null
+            const overlord_queries = data.overlords.map(overlord => {
+                overlord.type = +type
+                overlord.rank = +overlord.rank
+                this.removeEmptyTitlesAndHonorifics(overlord)
+                return t.one(pgp.helpers.insert(overlord, ["rank", "type", "person"], "overlord") + " RETURNING id").then(overlord_row => {
+                    const overlord_id = overlord_row.id
+                    const title_queries = overlord.titles.map(title => t.none("INSERT INTO overlord_titles(overlord_id, title_id) VALUES($1, $2)", [overlord_id, title]).catch(console.log))
+                    const honorific_queries = overlord.honorifics.map(honorific => t.none("INSERT INTO overlord_honorifics(overlord_id, honorific_id) VALUES($1, $2)", [overlord_id, honorific]).catch(console.log))
+                    subqueries.push(...title_queries, ...honorific_queries)
+                }).catch((insert_overlord_error) => {
+                    console.log("insert_overlord_error:", insert_overlord_error)
+                })
+            })
+
+            const issuer_queries = data.issuers.map(issuer => {
+                issuer.type = +type
+                this.removeEmptyTitlesAndHonorifics(issuer)
+                return t.one(pgp.helpers.insert(issuer, ["type", "person"], "issuer") + " RETURNING id").then(issuer_row => {
+                    const issuer_id = issuer_row.id
+                    const title_queries = issuer.titles.map(title => t.none("INSERT INTO issuer_titles(issuer, title) VALUES($1, $2)", [issuer_id, title]).catch(console.log))
+                    const honorific_queries = issuer.honorifics.map(honorific => t.none("INSERT INTO issuer_honorifics(issuer, honorific) VALUES($1, $2)", [issuer_id, honorific]).catch(console.log))
+                    subqueries.push(...title_queries, ...honorific_queries)
+                }).catch((insert_issuer_error) => {
+                    console.log("insert_issuer_error:", insert_issuer_error)
+                })
+            })
+
+            const other_persons = data.otherPersons.map(otherPerson => {
+                return t.none("INSERT INTO other_person (person, type) VALUES ($1,$2)", [otherPerson, type]).catch(console.log)
+            })
+
+            const pieces = data.pieces.map(piece => {
+                return t.none("INSERT INTO piece (piece, type) VALUES ($1,$2)", [piece, type]).catch(console.log)
+            })
+
+
+            await t.batch(overlord_queries).catch(console.log)
+            await t.batch(issuer_queries).catch(console.log)
+            await t.batch(other_persons).catch(console.log)
+            await t.batch(pieces).catch(console.log)
+            await t.batch(subqueries).catch(console.log)
+
+            return query
+        })
     }
 
-
+    static removeEmptyTitlesAndHonorifics(titledPerson) {
+        titledPerson.titles = titledPerson.titles.filter(title => !!title)
+        titledPerson.honorifics = titledPerson.honorifics.filter(honorific => !!honorific)
+    }
 
     static async addType(data) {
         /** UGLY BECAUSE OF NO TIME #cheers */
@@ -213,7 +215,7 @@ class Type {
                $[isolatedCharacters],
                $[literature]
                 ) RETURNING id
-            `, data)
+            `, data).catch(console.log)
 
             const type = query.id
             const subqueries = []
@@ -221,10 +223,11 @@ class Type {
             const overlord_queries = data.overlords.map(overlord => {
                 overlord.type = +type
                 overlord.rank = +overlord.rank
+                this.removeEmptyTitlesAndHonorifics(overlord)
                 return t.one(pgp.helpers.insert(overlord, ["rank", "type", "person"], "overlord") + " RETURNING id").then(overlord_row => {
                     const overlord_id = overlord_row.id
-                    const title_queries = overlord.titles.map(title => t.none("INSERT INTO overlord_titles(overlord_id, title_id) VALUES($1, $2)", [overlord_id, title]))
-                    const honorific_queries = overlord.honorifics.map(honorific => t.none("INSERT INTO overlord_honorifics(overlord_id, honorific_id) VALUES($1, $2)", [overlord_id, honorific]))
+                    const title_queries = overlord.titles.map(title => t.none("INSERT INTO overlord_titles(overlord_id, title_id) VALUES($1, $2)", [overlord_id, title]).catch(console.log))
+                    const honorific_queries = overlord.honorifics.map(honorific => t.none("INSERT INTO overlord_honorifics(overlord_id, honorific_id) VALUES($1, $2)", [overlord_id, honorific]).catch(console.log))
                     subqueries.push(...title_queries, ...honorific_queries)
                 }).catch((insert_overlord_error) => {
                     console.log("insert_overlord_error:", insert_overlord_error)
@@ -233,30 +236,31 @@ class Type {
 
             const issuer_queries = data.issuers.map(issuer => {
                 issuer.type = +type
+                this.removeEmptyTitlesAndHonorifics(issuer)
                 return t.one(pgp.helpers.insert(issuer, ["type", "person"], "issuer") + " RETURNING id").then(issuer_row => {
                     const issuer_id = issuer_row.id
-                    const title_queries = issuer.titles.map(title => t.none("INSERT INTO issuer_titles(issuer, title) VALUES($1, $2)", [issuer_id, title]))
-                    const honorific_queries = issuer.honorifics.map(honorific => t.none("INSERT INTO issuer_honorifics(issuer, honorific) VALUES($1, $2)", [issuer_id, honorific]))
+                    const title_queries = issuer.titles.map(title => t.none("INSERT INTO issuer_titles(issuer, title) VALUES($1, $2)", [issuer_id, title]).catch(console.log))
+                    const honorific_queries = issuer.honorifics.map(honorific => t.none("INSERT INTO issuer_honorifics(issuer, honorific) VALUES($1, $2)", [issuer_id, honorific]).catch(console.log))
                     subqueries.push(...title_queries, ...honorific_queries)
                 }).catch((insert_issuer_error) => {
                     console.log("insert_issuer_error:", insert_issuer_error)
                 })
             })
 
-            const other_persons = data.otherPersons.map(otherPerson =>{
-                return t.none("INSERT INTO other_person (person, type) VALUES ($1,$2)", [otherPerson, type])
+            const other_persons = data.otherPersons.map(otherPerson => {
+                return t.none("INSERT INTO other_person (person, type) VALUES ($1,$2)", [otherPerson, type]).catch(console.log)
             })
 
-            const pieces = data.pieces.map(piece =>{
-                return t.none("INSERT INTO piece (piece, type) VALUES ($1,$2)", [piece, type])
+            const pieces = data.pieces.map(piece => {
+                return t.none("INSERT INTO piece (piece, type) VALUES ($1,$2)", [piece, type]).catch(console.log)
             })
 
 
-            await t.batch(overlord_queries)
-            await t.batch(issuer_queries)
-            await t.batch(other_persons)
-            await t.batch(pieces)
-            await t.batch(subqueries)
+            await t.batch(overlord_queries).catch(console.log)
+            await t.batch(issuer_queries).catch(console.log)
+            await t.batch(other_persons).catch(console.log)
+            await t.batch(pieces).catch(console.log)
+            await t.batch(subqueries).catch(console.log)
 
             return query
         })
@@ -284,8 +288,6 @@ class Type {
     }
 
     static async getType(id) {
-        console.log(id)
-
 
         const result = await Database.one(`
             SELECT t.*, ma.id AS material_id, ma.name AS material_name, mi.id AS mint_id, mi.name AS mint_name, n.id AS nominal_id, n.name AS nominal_name, p.id AS caliph_id, p.name AS caliph_name FROM type t 
@@ -363,13 +365,14 @@ class Type {
         type.otherPersons = await Type.getOtherPersonsByType(type.id)
         type.pieces = await Type.getPieces(type.id)
 
+        console.log(this.issuers)
+
         for (let [key, val] of Object.entries(this.databaseToGraphQlMap)) {
             if (type[key]) {
                 type[val] = type[key]
                 delete type[key]
             }
         }
-
 
         return type
     }
@@ -478,13 +481,13 @@ class Type {
         const request = await Database.multi(
             `
             SELECT o.id, o.rank, o.type, p.id as person_id, p.name as person_name, p.role as person_role, t.title_names, t.title_ids, h.honorific_names, h.honorific_ids FROM overlord o
-            JOIN (
+            LEFT JOIN (
                  SELECT ot.overlord_id AS id, array_agg(t.name) AS title_names, array_agg(t.id) AS title_ids
                  FROM overlord_titles ot
                  JOIN title t ON t.id = ot.title_id
                  GROUP BY ot.overlord_id
             ) t USING(id)
-            JOIN (
+            LEFT JOIN (
                  SELECT oh.overlord_id AS id, array_agg(h.name) AS honorific_names, array_agg(h.id) AS honorific_ids
                  FROM overlord_honorifics oh
                  JOIN honorific h ON h.id = oh.honorific_id
@@ -493,11 +496,13 @@ class Type {
             INNER JOIN person p
                 ON o.person = p.id
 			WHERE o.type =$1
+            ORDER BY o.rank ASC
         `, type_id)
 
         const overlords = []
 
         request[0].forEach(result => {
+
             const config = [
                 {
                     prefix: "person_",
@@ -507,7 +512,6 @@ class Type {
             ]
 
             SQLUtils.objectifyBulk(result, config)
-
 
             const arrays = [
                 {
@@ -534,13 +538,13 @@ class Type {
     static async getIssuerByType(type_id) {
         const result = await Database.multi(`
         SELECT i.id, i.type, p.id as person_id, p.name as person_name, p.role as person_role, t.title_names, t.title_ids, h.honorific_names, h.honorific_ids FROM issuer i
-            JOIN (
+            LEFT JOIN (
                  SELECT it.issuer AS id, array_agg(t.name) AS title_names, array_agg(t.id) AS title_ids
                  FROM issuer_titles it
                  JOIN title t ON t.id = it.title
                  GROUP BY it.issuer
             ) t USING(id)
-            JOIN (
+            LEFT JOIN (
                  SELECT ih.issuer AS id, array_agg(h.name) AS honorific_names, array_agg(h.id) AS honorific_ids
                  FROM issuer_honorifics ih
                  JOIN honorific h ON h.id = ih.honorific
@@ -551,6 +555,7 @@ class Type {
 			WHERE i.type =$1
         `, type_id).catch(console.log)
 
+        console.log(result, type_id)
 
         if (request.length < 1) return []
 

@@ -19,17 +19,17 @@ exports.up = function (db) {
     issuer: {
       type: "int",
       foreignKey: {
-        name: "ih_issuer_fk",
+        name: "it_issuer_fk",
         table: "issuer",
         mapping: "id",
-        rules: { onDelete: 'RESTRICT', onUpdate: 'CASCADE' }
+        rules: { onDelete: 'CASCADE', onUpdate: 'CASCADE' }
 
       }
     },
     title: {
       type: "int",
       foreignKey: {
-        name: "ih_title_fk",
+        name: "it_title_fk",
         table: "title",
         mapping: "id",
         rules: { onDelete: 'RESTRICT', onUpdate: 'CASCADE' }

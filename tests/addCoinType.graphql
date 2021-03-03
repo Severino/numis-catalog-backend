@@ -10,11 +10,11 @@ mutation {
       yearOfMinting: "9x6"
       donativ: true
       procedure: "cast"
-      issuers: [{ person: 12, titles: [3, 4, 5], honorifics: [11, 13, 14] }]
+      issuers: [{ person: 12, titles: [3, 4, 5], honorifics: [11, 13, 14] },{ person: 16, titles: [5], honorifics: [14] }]
       overlords: [
         { person: 10, rank: 1, titles: [3, 4, 5], honorifics: [11, 13, 14] }
-        { person: 11, rank: 2, titles: [3, 4, 5], honorifics: [11, 13, 14] }
-        { person: 13, rank: 3, titles: [3, 4, 5], honorifics: [11, 13, 14] }
+        { person: 11, rank: 2, titles: [7,8], honorifics: [15, 16] }
+        { person: 13, rank: 3, titles: [3, 9], honorifics: [11, 13, 14] }
       ]
       otherPersons: [5, 13, 12]
       caliph: 6
@@ -26,7 +26,7 @@ mutation {
         misc: "MISC"
       }
       reverse: {
-        fieldText: "AVERSFIELD"
+        fieldText: "REVERSFIELD"
         innerInscript: "INNERSCRIPT"
         intermediateInscript: "INTERMEDSCRIPT"
         outerInscript: "OUTERSCRIPT"

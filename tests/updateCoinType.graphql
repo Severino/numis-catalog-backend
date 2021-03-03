@@ -1,0 +1,41 @@
+mutation {
+  updateCoinType(
+    id: 67
+    data: {
+      projectId: "UPDATED_PID"
+      treadwellId: "UPDATED_TID"
+      mint: 4
+      mintAsOnCoin: "MAOC"
+      material: 9
+      nominal: 20
+      yearOfMinting: "000"
+      donativ: false
+      procedure: "sevvt"
+      issuers: [
+        { person: 10, titles: [3, 4, 5], honorifics: [14, 11, 13] }
+        { person: 11, titles: [4, 3, 5], honorifics: [11, 13, 14] }
+      ]
+      otherPersons: [5, 13, 12]
+      overlords: [{ person: 10, rank: 1, titles: [7, 8], honorifics: [16] }]
+      caliph: 6
+      avers: {
+        fieldText: "U_AVERSFIELD"
+        innerInscript: "U_INNERSCRIPT"
+        intermediateInscript: "U_INTERMEDSCRIPT"
+        outerInscript: "U_OUTERSCRIPT"
+        misc: "U_MISC"
+      }
+      reverse: {
+        fieldText: "U_AVERSFIELD"
+        innerInscript: "U_INNERSCRIPT"
+        intermediateInscript: "U_INTERMEDSCRIPT"
+        outerInscript: "U_OUTERSCRIPT"
+        misc: "U_MISC"
+      }
+      cursiveScript: true
+      isolatedCharacters: "xxx"
+      literature: "<p>some ltierature</p>"
+      pieces: ["a", "b", "c"]
+    }
+  )
+}

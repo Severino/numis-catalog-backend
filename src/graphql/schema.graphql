@@ -148,9 +148,13 @@ type Query {
   searchHonorific(text: String): [Honorific]
   searchMaterial(text: String): [Material]
   searchMint(text: String): [Mint]
-  searchPerson(text: String): [Person]
   searchTitle(text: String): [Title]
   searchNominal(text: String): [Nominal]
+  searchPerson(text: String): [Person]
+
+  
+  searchPersonsWithRole(text: String!, filter:[String]): [Person]
+  searchPersonsWithoutRole(text: String!): [Person]
 
   getHonorific(id: Int!): Honorific
   getMaterial(id: Int!): Material
@@ -159,8 +163,6 @@ type Query {
   getTitle(id: Int!): Title
   getNominal(id: Int!): Nominal
 
-  getPersonsWithRole: [Person]!
-  getPersonsWithoutRole: [Person]!
   getPersonsByRole(role: String): [Person]!
 
   getOverlord(id: ID!): Overlord
@@ -213,8 +215,8 @@ type Overlord {
 type TitledPerson {
   id: ID
   person: Person
-  titles: [Title]!
-  honorifics: [Honorific]!
+  titles: [Title]
+  honorifics: [Honorific]
 }
 
 input OverlordInput {

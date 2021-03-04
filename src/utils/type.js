@@ -296,7 +296,7 @@ class Type {
             LEFT JOIN mint mi 
             ON t.mint = mi.id
             LEFT JOIN nominal n 
-            ON t.mint = n.id
+            ON t.nominal = n.id
             LEFT JOIN person p
             ON t.caliph = p.id
             WHERE t.id=$1
@@ -332,7 +332,6 @@ class Type {
         config.forEach(conf => delete type[conf.target])
         SQLUtils.objectifyBulk(type, config)
 
-
         /** UGLY BECAUSE OF NO TIME #cheers */
         type.avers = {}
         type.avers.fieldText = type.front_side_field_text
@@ -365,7 +364,6 @@ class Type {
         type.otherPersons = await Type.getOtherPersonsByType(type.id)
         type.pieces = await Type.getPieces(type.id)
 
-        console.log(this.issuers)
 
         for (let [key, val] of Object.entries(this.databaseToGraphQlMap)) {
             if (type[key]) {

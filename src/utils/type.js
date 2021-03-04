@@ -83,7 +83,9 @@ class Type {
             back_side_misc = $[back_side_misc],
             cursive_script = $[cursiveScript],
             isolated_characters = $[isolatedCharacters],
-            literature = $[literature]
+            literature = $[literature],
+            vassal=$[vassal],
+            specials=$[specials],
             WHERE id = $[id] 
         `, Object.assign({ id }, data)).catch(console.log)
 
@@ -150,6 +152,7 @@ class Type {
     }
 
     static async addType(data) {
+        console.log(data)
         /** UGLY BECAUSE OF NO TIME #cheers */
         data.front_side_field_text = data.avers.fieldText
         data.front_side_inner_inscript = data.avers.innerInscript
@@ -189,7 +192,9 @@ class Type {
                 back_side_misc,
                 cursive_script,
                 isolated_characters,
-                literature
+                literature,
+                vassal,
+                specials
                 )  VALUES (
                $[projectId],
                $[treadwellId],
@@ -213,7 +218,9 @@ class Type {
                $[back_side_misc],
                $[cursiveScript],
                $[isolatedCharacters],
-               $[literature]
+               $[literature],
+               $[vassal],
+                $[specials]
                 ) RETURNING id
             `, data).catch(console.log)
 

@@ -76,6 +76,9 @@ type CoinType {
   isolatedCharacters: String
   literature: String
   pieces: [String]
+  vassal: Boolean
+  specials: String
+
 }
 
 input CoinTypeInput {
@@ -99,6 +102,8 @@ input CoinTypeInput {
   isolatedCharacters: String
   literature: String
   pieces: [String]
+  vassal:Boolean
+  specials: String
 }
 
 type Mint {

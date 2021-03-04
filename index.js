@@ -56,12 +56,12 @@ const resolvers = {
         searchPersonsWithRole: async function (_, args) {
             const searchString = args.text
             const additionalFilter = args.filter || []
-            const filter = [" ", ...additionalFilter]
+            const filter = [" ", "overlord", ...additionalFilter]
             return Database.any(`SELECT * FROM person WHERE role IS NOT NULL AND (role IN ($2:csv)) IS NOT true AND unaccent(name) ILIKE $1 ORDER BY name ASC`, [`%${searchString}%`, filter]).catch(console.log)
         },
         searchPersonsWithoutRole: async function (_, args) {
             const searchString = args.text
-            return Database.any(`SELECT * FROM person WHERE (role IS NULL OR role=' ') AND unaccent(name) ILIKE $1 ORDER BY name ASC`, `%${searchString}%`).catch(console.log)
+            return Database.any(`SELECT * FROM person WHERE (role IS NULL OR role=' ' OR role='overlord') AND unaccent(name) ILIKE $1 ORDER BY name ASC`, `%${searchString}%`).catch(console.log)
         }
     }, Mutation: {
         addCoinType: async function (_, args) {

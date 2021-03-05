@@ -15,7 +15,7 @@ exports.setup = function (options, seedLink) {
 };
 
 exports.up = function (db, callback) {
-  return db.addColumn("type", "vassal", { type: "boolean", default: "false" }, callback);;
+  return db.addColumn("type", "vassal", { type: "boolean", defaultValue: "false" }, callback);;
 };
 
 exports.down = function (db, callback) {

@@ -85,7 +85,7 @@ class Type {
             isolated_characters = $[isolatedCharacters],
             literature = $[literature],
             vassal=$[vassal],
-            specials=$[specials],
+            specials=$[specials]
             WHERE id = $[id] 
         `, Object.assign({ id }, data)).catch(console.log)
 
@@ -152,7 +152,6 @@ class Type {
     }
 
     static async addType(data) {
-        console.log(data)
         /** UGLY BECAUSE OF NO TIME #cheers */
         data.front_side_field_text = data.avers.fieldText
         data.front_side_inner_inscript = data.avers.innerInscript
@@ -559,8 +558,6 @@ class Type {
                 ON i.person = p.id
 			WHERE i.type =$1
         `, type_id).catch(console.log)
-
-        console.log(result, type_id)
 
         if (request.length < 1) return []
 

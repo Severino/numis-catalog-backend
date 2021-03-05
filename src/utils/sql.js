@@ -10,8 +10,6 @@ class SQLUtils {
     static objectify(obj, config) {
         obj[config.target] = {}
         config.keys.forEach(key => {
-            if (config.target == "nominal")
-                console.log("nominal",obj, obj[config.prefix + key])
             if (obj[config.prefix + key]) {
                 obj[config.target][key] = obj[config.prefix + key]
                 delete obj[config.prefix + key]

@@ -68,7 +68,6 @@ const resolvers = {
             return Type.addType(args.data)
         },
         updateCoinType(_, args) {
-            console.log(args)
             return Type.updateType(args.id, args.data)
         },
         addOverlord(_, args) {

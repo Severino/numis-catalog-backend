@@ -35,7 +35,7 @@ mutation {
       cursiveScript: true
       isolatedCharacters: "a,b,c"
       literature: "<h1>HalloWelt</h1>"
-      pieces: ["alpha", "beta", "gamma"]
+      pieces: ["alpha", "beta", "gamma"],
     }
   )
 }

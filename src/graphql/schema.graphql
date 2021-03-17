@@ -42,11 +42,11 @@ type CoinSideInformation {
 }
 
 input CoinSideInformationInput {
-  fieldText: String
-  innerInscript: String
-  intermediateInscript: String
-  outerInscript: String
-  misc: String
+  fieldText: String = ""
+  innerInscript: String = ""
+  intermediateInscript: String = ""
+  outerInscript: String = ""
+  misc: String = ""
 }
 
 type ReducedCoinType {
@@ -59,17 +59,17 @@ type CoinType {
   id: ID
   projectId: String
   treadwellId: String
-  mint: Mint 
+  mint: Mint
   mintAsOnCoin: String
-  material: Material 
-  nominal: Nominal 
+  material: Material
+  nominal: Nominal
   yearOfMinting: String
   donativ: Boolean
   procedure: String
   issuers: [TitledPerson]
   overlords: [Overlord]
   otherPersons: [Person]
-  caliph: Person 
+  caliph: Person
   avers: CoinSideInformation
   reverse: CoinSideInformation
   cursiveScript: Boolean
@@ -78,32 +78,31 @@ type CoinType {
   pieces: [String]
   vassal: Boolean
   specials: String
-
 }
 
 input CoinTypeInput {
-  id: ID
-  projectId: String
-  treadwellId: String
-  mint: ID
-  mintAsOnCoin: String
-  material: ID
-  nominal: ID
-  yearOfMinting: String
-  donativ: Boolean
-  procedure: String
-  issuers: [TitledPersonInput]
-  overlords: [OverlordInput]
-  otherPersons: [ID]
-  caliph: ID
+  id: ID = null
+  projectId: String = ""
+  treadwellId: String = ""
+  mint: ID = null
+  mintAsOnCoin: String = ""
+  material: ID = null
+  nominal: ID = null
+  yearOfMinting: String = ""
+  donativ: Boolean = false
+  procedure: String = ""
+  issuers: [TitledPersonInput] = []
+  overlords: [OverlordInput] = []
+  otherPersons: [ID] = []
+  caliph: ID = null
   avers: CoinSideInformationInput
   reverse: CoinSideInformationInput
-  cursiveScript: Boolean
-  isolatedCharacters: String
-  literature: String
-  pieces: [String]
-  vassal:Boolean
-  specials: String
+  cursiveScript: Boolean = false
+  isolatedCharacters: String = ""
+  literature: String = ""
+  pieces: [String] = []
+  vassal: Boolean = false
+  specials: String = ""
 }
 
 type Mint {
@@ -157,8 +156,7 @@ type Query {
   searchNominal(text: String): [Nominal]
   searchPerson(text: String): [Person]
 
-  
-  searchPersonsWithRole(text: String!, filter:[String]): [Person]
+  searchPersonsWithRole(text: String!, filter: [String]): [Person]
   searchPersonsWithoutRole(text: String!): [Person]
 
   getHonorific(id: Int!): Honorific
@@ -201,12 +199,9 @@ type Mutation {
   updateNominal(data: NameInput): Void
   deleteNominal(id: Int): Void
 
-  addOverlord(data: OverlordInput): Void
-  removeOverlord(id: ID): Void
-
   addCoinType(data: CoinTypeInput): Void
   removeCoinType(id: ID): Void
-  updateCoinType(id:ID, data: CoinTypeInput): Void
+  updateCoinType(id: ID, data: CoinTypeInput): Void
 }
 
 type Overlord {

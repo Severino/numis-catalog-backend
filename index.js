@@ -51,6 +51,7 @@ const resolvers = {
             return Type.getTypesReducedList()
         },
         getCoinType: async function (_, args) {
+            console.log(args.id)
             return Type.getType(args.id)
         },
         searchPersonsWithRole: async function (_, args) {
@@ -68,12 +69,8 @@ const resolvers = {
             return Type.addType(args.data)
         },
         updateCoinType(_, args) {
-            return Type.updateType(args.id, args.data)
-        },
-        addOverlord(_, args) {
-            return Type.addOverlord(args.data)
+            return Type.updateType(args.id, args.data) 
         }
-
     }
 }
 

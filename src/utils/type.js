@@ -4,61 +4,25 @@ const SQLUtils = require("./sql")
 
 class Type {
 
-    static async addIssuer({
-        type = null,
-        person = null,
-        titles = [],
-        honorifics = []
-    } = {}) {
-
-
-        const insert = await Database.any(`
-        INSERT INTO issuer (type, person) 
-        VALUES ($[type],$[person]) 
-        RETURNING id;
-        `, {
-            type,
-            person
-        })
-
-        const promises = []
-
-
-        if (insert.length == 1) {
-            const issuer_id = insert[0].id
-
-            titles.forEach((title) => {
-                const p = Database.any("INSERT INTO issuer_titles(issuer, title) VALUES($1, $2)", [issuer_id, title])
-                promises.push(p)
-            })
-
-            honorifics.forEach((honorific) => {
-                const p = Database.any("INSERT INTO issuer_honorifics(issuer, honorific) VALUES($1, $2)", [issuer_id, honorific])
-                promises.push(p)
-            })
-        }
-
-        return Promise.all(promises)
-    }
-
 
     static async updateType(id, data) {
-        if (!id) return Promise.reject("id is required for update.")
-        /** UGLY BECAUSE OF NO TIME #cheers */
-        data.front_side_field_text = data.avers.fieldText
-        data.front_side_inner_inscript = data.avers.innerInscript
-        data.front_side_intermediate_inscript = data.avers.intermediateInscript
-        data.front_side_outer_inscript = data.avers.outerInscript
-        data.front_side_misc = data.avers.misc
-        data.back_side_field_text = data.reverse.fieldText
-        data.back_side_inner_inscript = data.reverse.innerInscript
-        data.back_side_intermediate_inscript = data.reverse.intermediateInscript
-        data.back_side_outer_inscript = data.reverse.outerInscript
-        data.back_side_misc = data.reverse.misc
+        if (!id) throw new Error("Id is required for update.")
+
+        /**
+         * Thus the avers and reverse data is nested inside a seperate object,
+         * inside the GraphQL interface, we need to transform whose properties
+         * to the top level, to store them inside the database.
+         * 
+         * ADDITIONALLY: The 'unwrapCoinSideInformation' takes care of creating
+         * empty properties, if the CoinSideInformation is not provided and
+         * therefore null.
+         */
+        this.unwrapCoinSideInformation(data, "front_side_", data.avers)
+        this.unwrapCoinSideInformation(data, "back_side_", data.reverse)
 
         return Database.tx(async t => {
-
-            const query = await t.none(`
+        
+            await t.none(`
         UPDATE type 
         SET
             project_id = $[projectId],
@@ -87,87 +51,77 @@ class Type {
             vassal=$[vassal],
             specials=$[specials]
             WHERE id = $[id] 
-        `, Object.assign({ id }, data)).catch(console.log)
+        `, Object.assign({ id }, data))
 
 
-            await t.none("DELETE FROM overlord WHERE type=$1", id).catch(console.log)
-            await t.none("DELETE FROM issuer WHERE type=$1", id).catch(console.log)
-            await t.none("DELETE FROM other_person WHERE type=$1", id).catch(console.log)
-            await t.none("DELETE FROM piece WHERE type=$1", id).catch(console.log)
+            await t.none("DELETE FROM overlord WHERE type=$1", id)
+            await t.none("DELETE FROM issuer WHERE type=$1", id)
+            await t.none("DELETE FROM other_person WHERE type=$1", id)
+            await t.none("DELETE FROM piece WHERE type=$1", id)
 
-            const type = id
-            const subqueries = []
-
-
-
-            const overlord_queries = data.overlords.map(overlord => {
-                overlord.type = +type
-                overlord.rank = +overlord.rank
-                this.removeEmptyTitlesAndHonorifics(overlord)
-                return t.one(pgp.helpers.insert(overlord, ["rank", "type", "person"], "overlord") + " RETURNING id").then(overlord_row => {
-                    const overlord_id = overlord_row.id
-                    const title_queries = overlord.titles.map(title => t.none("INSERT INTO overlord_titles(overlord_id, title_id) VALUES($1, $2)", [overlord_id, title]).catch(console.log))
-                    const honorific_queries = overlord.honorifics.map(honorific => t.none("INSERT INTO overlord_honorifics(overlord_id, honorific_id) VALUES($1, $2)", [overlord_id, honorific]).catch(console.log))
-                    subqueries.push(...title_queries, ...honorific_queries)
-                }).catch((insert_overlord_error) => {
-                    console.log("insert_overlord_error:", insert_overlord_error)
-                })
-            })
-
-            const issuer_queries = data.issuers.map(issuer => {
-                issuer.type = +type
-                this.removeEmptyTitlesAndHonorifics(issuer)
-                return t.one(pgp.helpers.insert(issuer, ["type", "person"], "issuer") + " RETURNING id").then(issuer_row => {
-                    const issuer_id = issuer_row.id
-                    const title_queries = issuer.titles.map(title => t.none("INSERT INTO issuer_titles(issuer, title) VALUES($1, $2)", [issuer_id, title]).catch(console.log))
-                    const honorific_queries = issuer.honorifics.map(honorific => t.none("INSERT INTO issuer_honorifics(issuer, honorific) VALUES($1, $2)", [issuer_id, honorific]).catch(console.log))
-                    subqueries.push(...title_queries, ...honorific_queries)
-                }).catch((insert_issuer_error) => {
-                    console.log("insert_issuer_error:", insert_issuer_error)
-                })
-            })
-
-            const other_persons = data.otherPersons.map(otherPerson => {
-                return t.none("INSERT INTO other_person (person, type) VALUES ($1,$2)", [otherPerson, type]).catch(console.log)
-            })
-
-            const pieces = data.pieces.map(piece => {
-                return t.none("INSERT INTO piece (piece, type) VALUES ($1,$2)", [piece, type]).catch(console.log)
-            })
-
-
-            await t.batch(overlord_queries).catch(console.log)
-            await t.batch(issuer_queries).catch(console.log)
-            await t.batch(other_persons).catch(console.log)
-            await t.batch(pieces).catch(console.log)
-            await t.batch(subqueries).catch(console.log)
-
-            return query
+            await this.addOverlords(t, data, id)
+            await this.addIssuers(t, data, id)
+            await this.addOtherPersons(t, data, id)
+            await this.addPieces(t, data, id)
+            return id
         })
     }
 
     static removeEmptyTitlesAndHonorifics(titledPerson) {
-        titledPerson.titles = titledPerson.titles.filter(title => !!title)
-        titledPerson.honorifics = titledPerson.honorifics.filter(honorific => !!honorific)
+        function removeEmpty (el) {
+            // This is not ideal, as the id in PSQL could be 0.
+            // But only when explicitly defined. Otherwise counting starts at 1.
+            // Therefore this should be fine. 
+            return el != null && el != 0
+        }
+        titledPerson.titles = titledPerson.titles.filter(removeEmpty)
+        titledPerson.honorifics = titledPerson.honorifics.filter(removeEmpty)
+    }
+
+    static unwrapCoinSideInformation(target, prefix, {
+        fieldText = "",
+        innerInscript = "",
+        intermediateInscript = "",
+        outerInscript = "",
+        misc = ""
+    } = {}) {
+
+        let infos = {
+            fieldText,
+            innerInscript,
+            intermediateInscript,
+            outerInscript,
+            misc
+        }
+
+        for (let [key, value] of Object.entries(infos)) {
+            key = key.replace(/([A-Z]{1})/g, (match) => {
+                return `_${match.toLowerCase()}`
+            })
+            const fullKey = prefix + key
+            target[fullKey] = value
+        }
+
+        return target
     }
 
     static async addType(data) {
-        /** UGLY BECAUSE OF NO TIME #cheers */
-        data.front_side_field_text = data.avers.fieldText
-        data.front_side_inner_inscript = data.avers.innerInscript
-        data.front_side_intermediate_inscript = data.avers.intermediateInscript
-        data.front_side_outer_inscript = data.avers.outerInscript
-        data.front_side_misc = data.avers.misc
-        data.back_side_field_text = data.reverse.fieldText
-        data.back_side_inner_inscript = data.reverse.innerInscript
-        data.back_side_intermediate_inscript = data.reverse.intermediateInscript
-        data.back_side_outer_inscript = data.reverse.outerInscript
-        data.back_side_misc = data.reverse.misc
+        /**
+         * Thus the avers and reverse data is nested inside a seperate object,
+         * inside the GraphQL interface, we need to transform whose properties
+         * to the top level, to store them inside the database.
+         * 
+         * ADDITIONALLY: The 'unwrapCoinSideInformation' takes care of creating
+         * empty properties, if the CoinSideInformation is not provided and
+         * therefore null.
+         */
+        this.unwrapCoinSideInformation(data, "front_side_", data.avers)
+        this.unwrapCoinSideInformation(data, "back_side_", data.reverse)
 
 
         return Database.tx(async t => {
 
-            const query = await t.one(`
+            const { id: type } = await t.one(`
             INSERT INTO type (
                 project_id, 
                 treadwell_id, 
@@ -221,55 +175,59 @@ class Type {
                $[vassal],
                 $[specials]
                 ) RETURNING id
-            `, data).catch(console.log)
-
-            const type = query.id
-            const subqueries = []
-
-            const overlord_queries = data.overlords.map(overlord => {
-                overlord.type = +type
-                overlord.rank = +overlord.rank
-                this.removeEmptyTitlesAndHonorifics(overlord)
-                return t.one(pgp.helpers.insert(overlord, ["rank", "type", "person"], "overlord") + " RETURNING id").then(overlord_row => {
-                    const overlord_id = overlord_row.id
-                    const title_queries = overlord.titles.map(title => t.none("INSERT INTO overlord_titles(overlord_id, title_id) VALUES($1, $2)", [overlord_id, title]).catch(console.log))
-                    const honorific_queries = overlord.honorifics.map(honorific => t.none("INSERT INTO overlord_honorifics(overlord_id, honorific_id) VALUES($1, $2)", [overlord_id, honorific]).catch(console.log))
-                    subqueries.push(...title_queries, ...honorific_queries)
-                }).catch((insert_overlord_error) => {
-                    console.log("insert_overlord_error:", insert_overlord_error)
-                })
-            })
-
-            const issuer_queries = data.issuers.map(issuer => {
-                issuer.type = +type
-                this.removeEmptyTitlesAndHonorifics(issuer)
-                return t.one(pgp.helpers.insert(issuer, ["type", "person"], "issuer") + " RETURNING id").then(issuer_row => {
-                    const issuer_id = issuer_row.id
-                    const title_queries = issuer.titles.map(title => t.none("INSERT INTO issuer_titles(issuer, title) VALUES($1, $2)", [issuer_id, title]).catch(console.log))
-                    const honorific_queries = issuer.honorifics.map(honorific => t.none("INSERT INTO issuer_honorifics(issuer, honorific) VALUES($1, $2)", [issuer_id, honorific]).catch(console.log))
-                    subqueries.push(...title_queries, ...honorific_queries)
-                }).catch((insert_issuer_error) => {
-                    console.log("insert_issuer_error:", insert_issuer_error)
-                })
-            })
-
-            const other_persons = data.otherPersons.map(otherPerson => {
-                return t.none("INSERT INTO other_person (person, type) VALUES ($1,$2)", [otherPerson, type]).catch(console.log)
-            })
-
-            const pieces = data.pieces.map(piece => {
-                return t.none("INSERT INTO piece (piece, type) VALUES ($1,$2)", [piece, type]).catch(console.log)
-            })
+            `, data)
 
 
-            await t.batch(overlord_queries).catch(console.log)
-            await t.batch(issuer_queries).catch(console.log)
-            await t.batch(other_persons).catch(console.log)
-            await t.batch(pieces).catch(console.log)
-            await t.batch(subqueries).catch(console.log)
-
-            return query
+            await this.addOverlords(t, data, type)
+            await this.addIssuers(t, data, type)
+            await this.addOtherPersons(t, data, type)
+            await this.addPieces(t, data, type)
+            return type
         })
+    }
+
+    static async addPieces(t, data, type) {
+        for (let piece of data.pieces.values()) {
+            await t.none("INSERT INTO piece (piece, type) VALUES ($1,$2)", [piece, type])
+        }
+    }
+
+    static async addOtherPersons(t, data, type) {
+        for (let otherPerson of data.otherPersons.values()) {
+            await t.none("INSERT INTO other_person (person, type) VALUES ($1,$2)", [otherPerson, type])
+        }
+    }
+
+    static async addIssuers(t, data, type) {
+        for (let issuer of data.issuers.values()) {
+            issuer.type = +type
+            this.removeEmptyTitlesAndHonorifics(issuer)
+            let { id: issuer_id } = await t.one(pgp.helpers.insert(issuer, ["type", "person"], "issuer") + " RETURNING id")
+
+            for (let title of issuer.titles.values()) {
+                await t.none("INSERT INTO issuer_titles(issuer, title) VALUES($1, $2)", [issuer_id, title])
+            }
+
+            for (let honorific of issuer.honorifics.values()) {
+                await t.none("INSERT INTO issuer_honorifics(issuer, honorific) VALUES($1, $2)", [issuer_id, honorific])
+            }
+        }
+    }
+
+    static async addOverlords(t, data, type) {
+        for (let overlord of data.overlords.values()) {
+            overlord.type = +type
+            overlord.rank = +overlord.rank
+            this.removeEmptyTitlesAndHonorifics(overlord)
+            let { id: overlord_id } = await t.one(pgp.helpers.insert(overlord, ["rank", "type", "person"], "overlord") + " RETURNING id")
+            for (let title of overlord.titles.values()) {
+                await t.none("INSERT INTO overlord_titles(overlord_id, title_id) VALUES($1, $2)", [overlord_id, title])
+            }
+
+            for (let honorific of overlord.honorifics.values()) {
+                await t.none("INSERT INTO overlord_honorifics(overlord_id, honorific_id) VALUES($1, $2)", [overlord_id, honorific])
+            }
+        }
     }
 
     static async getTypesReducedList() {
@@ -294,6 +252,7 @@ class Type {
     }
 
     static async getType(id) {
+        if (!id) throw new Error("Id must be provided!")
 
         const result = await Database.one(`
             SELECT t.*, ma.id AS material_id, ma.name AS material_name, mi.id AS mint_id, mi.name AS mint_name, n.id AS nominal_id, n.name AS nominal_name, p.id AS caliph_id, p.name AS caliph_name FROM type t 
@@ -306,7 +265,9 @@ class Type {
             LEFT JOIN person p
             ON t.caliph = p.id
             WHERE t.id=$1
-            `, id).catch(console.log)
+            `, id).catch(() => {
+            throw new Error("Requested type does not exist!")
+        })
 
         if (!result) return {}
 
@@ -392,40 +353,6 @@ class Type {
         }
     }
 
-    static async addOverlord({
-        type = null,
-        person = null,
-        rank = null,
-        titles = [],
-        honorifics = []
-    } = {}) {
-
-
-        const insert = await Database.any(`
-        INSERT INTO overlord (type, person, rank) 
-        VALUES ($[type],$[person],$[rank]) 
-        RETURNING id;
-        `, { type, person, rank })
-
-        const promises = []
-
-
-        if (insert.length >= 1) {
-            const overlord_id = insert[0].id
-
-            titles.forEach((title) => {
-                const p = Database.any("INSERT INTO overlord_titles(overlord_id, title_id) VALUES($1, $2)", [overlord_id, title])
-                promises.push(p)
-            })
-
-            honorifics.forEach((honorific) => {
-                const p = Database.any("INSERT INTO overlord_honorifics(overlord_id, honorific_id) VALUES($1, $2)", [overlord_id, honorific])
-                promises.push(p)
-            })
-        }
-
-        return Promise.all(promises)
-    }
 
     static async getOverlord(id) {
 
@@ -557,7 +484,7 @@ class Type {
             INNER JOIN person p
                 ON i.person = p.id
 			WHERE i.type =$1
-        `, type_id).catch(console.log)
+        `, type_id)
 
         if (request.length < 1) return []
 
@@ -604,7 +531,7 @@ class Type {
         JOIN person p
             ON op.person = p.id
 			WHERE op.type=$1
-        `, type_id).catch(console.log)
+        `, type_id)
         return result.length > 0 ? result[0] : []
     }
 
@@ -612,7 +539,7 @@ class Type {
         const result = await Database.multi(`
         SELECT piece.piece FROM piece
 			WHERE piece.type=$1
-        `, type_id).catch(console.log)
+        `, type_id)
 
         return result.length > 0 ? result[0].map((obj) => obj.piece) : [];
     }

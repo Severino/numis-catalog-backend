@@ -166,6 +166,8 @@ type Query {
   getTitle(id: Int!): Title
   getNominal(id: Int!): Nominal
 
+  searchMintWardens(text:String):[Person]
+
   getPersonsByRole(role: String): [Person]!
 
   getOverlord(id: ID!): Overlord

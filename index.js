@@ -63,6 +63,10 @@ const resolvers = {
         searchPersonsWithoutRole: async function (_, args) {
             const searchString = args.text
             return Database.any(`SELECT * FROM person WHERE (role IS NULL OR role=' ' OR role='overlord') AND unaccent(name) ILIKE $1 ORDER BY name ASC`, `%${searchString}%`).catch(console.log)
+        },
+        searchMintWardens: async function (_, args) {
+            const searchString = args.text
+            return Database.any(`SELECT * FROM person WHERE (role IS NULL OR role=' ' OR role='overlord' OR role='vassal') AND unaccent(name) ILIKE $1 ORDER BY name ASC`, `%${searchString}%`).catch(console.log)
         }
     }, Mutation: {
         addCoinType: async function (_, args) {

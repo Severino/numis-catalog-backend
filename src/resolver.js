@@ -42,14 +42,12 @@ class Resolver {
     }
 
     async get(_, args) {
-        let p = Database.one(`SELECT * FROM ${this.name} WHERE id=$1`, [args.id]).catch(console.log)
+        let p = Database.one(`SELECT * FROM ${this.name} WHERE id=$1 `, [args.id]).catch(console.log)
         return p
     }
 
     async list() {
-        const query = `SELECT * FROM ${this.name}`
-        const result = await this.request(query)
-        return result || []
+       return Database.manyOrNone(`SELECT * FROM ${this.name} ORDER BY name ASC`)
     }
 
     async search(_, args) {

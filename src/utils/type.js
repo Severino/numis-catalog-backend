@@ -22,7 +22,6 @@ class Type {
         return Database.tx(async t => {
 
             data.id = id
-            console.log(data.excludeFromMapApp, data.excludeFromTypeCatalogue)
             await t.none(`
         UPDATE type 
         SET
@@ -50,7 +49,8 @@ class Type {
             literature = $[literature],
             specials=$[specials],
             exclude_from_type_catalogue=$[excludeFromTypeCatalogue],
-            exclude_from_map_app=$[excludeFromMapApp]
+            exclude_from_map_app=$[excludeFromMapApp],
+            internal_notes = $[internalNotes]
             WHERE id = $[id] 
         `, data)
 
@@ -137,7 +137,6 @@ class Type {
         this.unwrapCoinSideInformation(data, "front_side_", data.avers)
         this.unwrapCoinSideInformation(data, "back_side_", data.reverse)
 
-
         return Database.tx(async t => {
 
             const { id: type } = await t.one(`
@@ -165,8 +164,9 @@ class Type {
                 cursive_script,
                 literature,
                 specials,
-                exclude_from_type_catalogue
-                exclude_from_map_app
+                exclude_from_type_catalogue,
+                exclude_from_map_app,
+                internal_notes
                 )  VALUES (
                $[projectId],
                $[treadwellId],
@@ -190,9 +190,10 @@ class Type {
                $[back_side_misc],
                $[cursiveScript],
                $[literature],
-                $[specials]
-                $[excludeFromTypeCatalogue]
-                $[excludeFromMapApp]
+                $[specials],
+                $[excludeFromTypeCatalogue],
+                $[excludeFromMapApp],
+                $[internalNotes]
                 ) RETURNING id
             `, data)
 
@@ -356,7 +357,8 @@ class Type {
             year_of_mint: "yearOfMinting",
             cursive_script: "cursiveScript",
             exclude_from_type_catalogue: "excludeFromTypeCatalogue",
-            exclude_from_map_app: "excludeFromMapApp"
+            exclude_from_map_app: "excludeFromMapApp",
+            internal_notes: "internalNotes"
         }
     }
 
@@ -551,10 +553,12 @@ class Type {
     }
 
     static async getPieces(type_id) {
-        return await Database.manyOrNone(`
+       let results =  await Database.manyOrNone(`
         SELECT piece.piece FROM piece
 			WHERE piece.type=$1
         `, type_id)
+
+        return results.map(res => res.piece)
     }
 
 }

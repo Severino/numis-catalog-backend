@@ -1,9 +1,10 @@
-const {Database} = require("./utils/database.js")
+const { Database } = require("./utils/database.js")
 
 class Resolver {
 
-    constructor(name) {
+    constructor(name, { tableName = null } = {}) {
         this.name = name
+        this.tableName = tableName ? tableName : this.name
     }
 
     get capitalizedName() {
@@ -26,32 +27,31 @@ class Resolver {
 
     async add(_, args) {
         const object = args.data
-        return this.request(`INSERT INTO ${this.name} (${Object.keys(object).join(",")}) VALUES (${Object.keys(object).map((_, idx) => `$${idx + 1}`)})`, Object.values(object))
+        return this.request(`INSERT INTO ${this.tableName} (${Object.keys(object).join(",")}) VALUES (${Object.keys(object).map((_, idx) => `$${idx + 1}`)})`, Object.values(object))
     }
 
     async update(_, args) {
         const object = args.data
         const id = object.id
         delete object.id
-        const query = `UPDATE ${this.name} SET ${Object.keys(object).map((val, idx) => `${val}=$${idx + 2}`)} WHERE id=$1`
+        const query = `UPDATE ${this.tableName} SET ${Object.keys(object).map((val, idx) => `${val}=$${idx + 2}`)} WHERE id=$1`
         return this.request(query, [id, ...Object.values(object)])
     }
 
     async delete(_, args) {
-        return this.request(`DELETE FROM ${this.name} WHERE id=$1`, [args.id])
+        return this.request(`DELETE FROM ${this.tableName} WHERE id=$1`, [args.id])
     }
 
     async get(_, args) {
-        let p = Database.one(`SELECT * FROM ${this.name} WHERE id=$1 `, [args.id]).catch(console.log)
-        return p
+        return Database.one(`SELECT * FROM ${this.tableName} WHERE id=$1 `, [args.id]).catch(console.log)
     }
 
     async list() {
-       return Database.manyOrNone(`SELECT * FROM ${this.name} ORDER BY name ASC`)
+        return Database.manyOrNone(`SELECT * FROM ${this.tableName} ORDER BY name ASC`)
     }
 
     async search(_, args) {
-        return Database.any(`SELECT * FROM ${this.name} WHERE unaccent(name) ILIKE $1 ORDER BY name ASC`, `%${args.text}%`).catch(console.log)
+        return Database.any(`SELECT * FROM ${this.tableName} WHERE unaccent(name) ILIKE $1 ORDER BY name ASC`, `%${args.text}%`).catch(console.log)
     }
 
     async request(query, params = []) {

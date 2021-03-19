@@ -28,6 +28,7 @@ app.use(cors())
  * get, add, delete, update and list in one convenient utility.
  */
 const resolverClasses = [
+    new Resolver("coinMark", {tableName: "coin_marks"}),
     new Resolver("material"),
     new MintResolver("mint"),
     new Resolver("title"),

@@ -7,7 +7,6 @@ class Type {
 
     static async updateType(id, data) {
         if (!id) throw new Error("Id is required for update.")
-
         /**
          * Thus the avers and reverse data is nested inside a seperate object,
          * inside the GraphQL interface, we need to transform whose properties
@@ -21,7 +20,9 @@ class Type {
         this.unwrapCoinSideInformation(data, "back_side_", data.reverse)
 
         return Database.tx(async t => {
-        
+
+            data.id = id
+            console.log(data.excludeFromMapApp, data.excludeFromTypeCatalogue)
             await t.none(`
         UPDATE type 
         SET
@@ -46,29 +47,32 @@ class Type {
             back_side_outer_inscript = $[back_side_outer_inscript],
             back_side_misc = $[back_side_misc],
             cursive_script = $[cursiveScript],
-            isolated_characters = $[isolatedCharacters],
             literature = $[literature],
-            vassal=$[vassal],
-            specials=$[specials]
+            specials=$[specials],
+            exclude_from_type_catalogue=$[excludeFromTypeCatalogue],
+            exclude_from_map_app=$[excludeFromMapApp]
             WHERE id = $[id] 
-        `, Object.assign({ id }, data))
+        `, data)
 
 
             await t.none("DELETE FROM overlord WHERE type=$1", id)
             await t.none("DELETE FROM issuer WHERE type=$1", id)
             await t.none("DELETE FROM other_person WHERE type=$1", id)
             await t.none("DELETE FROM piece WHERE type=$1", id)
+            await t.none("DELETE FROM type_coin_marks WHERE type=$1", id)
 
             await this.addOverlords(t, data, id)
             await this.addIssuers(t, data, id)
             await this.addOtherPersons(t, data, id)
             await this.addPieces(t, data, id)
+            await this.addCoinMarks(t, data, id)
+
             return id
         })
     }
 
     static removeEmptyTitlesAndHonorifics(titledPerson) {
-        function removeEmpty (el) {
+        function removeEmpty(el) {
             // This is not ideal, as the id in PSQL could be 0.
             // But only when explicitly defined. Otherwise counting starts at 1.
             // Therefore this should be fine. 
@@ -78,14 +82,29 @@ class Type {
         titledPerson.honorifics = titledPerson.honorifics.filter(removeEmpty)
     }
 
-    static unwrapCoinSideInformation(target, prefix, {
-        fieldText = "",
-        innerInscript = "",
-        intermediateInscript = "",
-        outerInscript = "",
-        misc = ""
-    } = {}) {
+    static wrapCoinSideInformation(source, prefix) {
+        const coinSideInformation = {}
+        coinSideInformation.fieldText = source[prefix + "field_text"]
+        delete source[prefix + "field_text"]
+        coinSideInformation.innerInscript = source[prefix + "inner_inscript"]
+        delete source[prefix + "inner_inscript"]
+        coinSideInformation.intermediateInscript = source[prefix + "intermediate_inscript"]
+        delete source[prefix + "intermediate_inscript"]
+        coinSideInformation.outerInscript = source[prefix + "outer_inscript"]
+        delete source[prefix + "outer_inscript"]
+        coinSideInformation.misc = source[prefix + "misc"]
+        delete source[prefix + "misc"]
 
+        return coinSideInformation
+    }
+
+    static unwrapCoinSideInformation(target, prefix, {
+        fieldText,
+        innerInscript,
+        intermediateInscript,
+        outerInscript,
+        misc,
+    } = {}) {
         let infos = {
             fieldText,
             innerInscript,
@@ -144,10 +163,10 @@ class Type {
                 back_side_outer_inscript,
                 back_side_misc,
                 cursive_script,
-                isolated_characters,
                 literature,
-                vassal,
-                specials
+                specials,
+                exclude_from_type_catalogue
+                exclude_from_map_app
                 )  VALUES (
                $[projectId],
                $[treadwellId],
@@ -170,10 +189,10 @@ class Type {
                $[back_side_outer_inscript],
                $[back_side_misc],
                $[cursiveScript],
-               $[isolatedCharacters],
                $[literature],
-               $[vassal],
                 $[specials]
+                $[excludeFromTypeCatalogue]
+                $[excludeFromMapApp]
                 ) RETURNING id
             `, data)
 
@@ -182,8 +201,17 @@ class Type {
             await this.addIssuers(t, data, type)
             await this.addOtherPersons(t, data, type)
             await this.addPieces(t, data, type)
+            await this.addCoinMarks(t, data, type)
             return type
         })
+    }
+
+    static async addCoinMarks(t, data, type) {
+
+        data.coinMarks = data.coinMarks.filter(coinMark => coinMark != null)
+        for (let coinMark of data.coinMarks.values()) {
+            await t.none("INSERT INTO type_coin_marks (coin_mark, type) VALUES ($1,$2)", [coinMark, type])
+        }
     }
 
     static async addPieces(t, data, type) {
@@ -299,41 +327,19 @@ class Type {
         config.forEach(conf => delete type[conf.target])
         SQLUtils.objectifyBulk(type, config)
 
-        /** UGLY BECAUSE OF NO TIME #cheers */
-        type.avers = {}
-        type.avers.fieldText = type.front_side_field_text
-        delete type.front_side_field_text
-        type.avers.innerInscript = type.front_side_inner_inscript
-        delete type.front_side_inner_inscript
-        type.avers.intermediateInscript = type.front_side_intermediate_inscript
-        delete type.front_side_intermediate_inscript
-        type.avers.outerInscript = type.front_side_outer_inscript
-        delete type.front_side_outer_inscript
-        type.avers.misc = type.front_side_misc
-        delete type.front_side_misc
-
-        type.reverse = {}
-        type.reverse.fieldText = type.back_side_field_text
-        delete type.back_side_field_text
-        type.reverse.innerInscript = type.back_side_inner_inscript
-        delete type.back_side_inner_inscript
-        type.reverse.intermediateInscript = type.back_side_intermediate_inscript
-        delete type.back_side_intermediate_inscript
-        type.reverse.outerInscript = type.back_side_outer_inscript
-        delete type.back_side_outer_inscript
-        type.reverse.misc = type.back_side_misc
-        delete type.back_side_misc
-
-
+        type.avers = this.wrapCoinSideInformation(type, "front_side_")
+        type.reverse = this.wrapCoinSideInformation(type, "back_side_")
 
         type.overlords = await Type.getOverlordsByType(type.id)
         type.issuers = await Type.getIssuerByType(type.id)
         type.otherPersons = await Type.getOtherPersonsByType(type.id)
         type.pieces = await Type.getPieces(type.id)
+        type.coinMarks = await Type.getCoinMarks(type.id)
+
 
 
         for (let [key, val] of Object.entries(this.databaseToGraphQlMap)) {
-            if (type[key]) {
+            if (type[key] != null) {
                 type[val] = type[key]
                 delete type[key]
             }
@@ -349,7 +355,8 @@ class Type {
             mint_as_on_coin: "mintAsOnCoin",
             year_of_mint: "yearOfMinting",
             cursive_script: "cursiveScript",
-            isolated_characters: "isolatedCharacters"
+            exclude_from_type_catalogue: "excludeFromTypeCatalogue",
+            exclude_from_map_app: "excludeFromMapApp"
         }
     }
 
@@ -525,23 +532,29 @@ class Type {
         return issuers
     }
 
+    static async getCoinMarks(type_id) {
+        return await Database.manyOrNone(`
+        SELECT cm.* FROM type_coin_marks tcm
+        LEFT JOIN coin_marks cm
+            ON tcm.coin_mark = cm.id
+			WHERE tcm.type = $1
+        `, type_id)
+    }
+
     static async getOtherPersonsByType(type_id) {
-        const result = await Database.multi(`
+        return await Database.manyOrNone(`
         SELECT p.* FROM other_person op 
-        JOIN person p
+        LEFT JOIN person p
             ON op.person = p.id
 			WHERE op.type=$1
         `, type_id)
-        return result.length > 0 ? result[0] : []
     }
 
     static async getPieces(type_id) {
-        const result = await Database.multi(`
+        return await Database.manyOrNone(`
         SELECT piece.piece FROM piece
 			WHERE piece.type=$1
         `, type_id)
-
-        return result.length > 0 ? result[0].map((obj) => obj.piece) : [];
     }
 
 }

@@ -73,11 +73,12 @@ type CoinType {
   avers: CoinSideInformation
   reverse: CoinSideInformation
   cursiveScript: Boolean
-  isolatedCharacters: String
+  coinMarks: [CoinMark]
   literature: String
   pieces: [String]
-  vassal: Boolean
   specials: String
+  excludeFromTypeCatalogue: Boolean
+  excludeFromMapApp: Boolean
 }
 
 input CoinTypeInput {
@@ -98,11 +99,17 @@ input CoinTypeInput {
   avers: CoinSideInformationInput
   reverse: CoinSideInformationInput
   cursiveScript: Boolean = false
-  isolatedCharacters: String = ""
+  coinMarks: [ID] = []
   literature: String = ""
   pieces: [String] = []
-  vassal: Boolean = false
   specials: String = ""
+  excludeFromTypeCatalogue: Boolean
+  excludeFromMapApp: Boolean
+}
+
+type CoinMark {
+  id: ID!
+  name: String
 }
 
 type Mint {
@@ -142,6 +149,7 @@ type Nominal {
 type Query {
   ping: String
 
+  coinMark: [CoinMark]
   nominal: [Nominal]!
   material: [Material]!
   person: [Person]!
@@ -149,6 +157,7 @@ type Query {
   title: [Title]!
   mint: [Mint]!
 
+  searchCoinMark(text: String): [CoinMark]
   searchHonorific(text: String): [Honorific]
   searchMaterial(text: String): [Material]
   searchMint(text: String): [Mint]
@@ -159,6 +168,7 @@ type Query {
   searchPersonsWithRole(text: String!, filter: [String]): [Person]
   searchPersonsWithoutRole(text: String!): [Person]
 
+  getCoinMark(id: Int!): CoinMark
   getHonorific(id: Int!): Honorific
   getMaterial(id: Int!): Material
   getMint(id: Int!): Mint
@@ -166,7 +176,7 @@ type Query {
   getTitle(id: Int!): Title
   getNominal(id: Int!): Nominal
 
-  searchMintWardens(text:String):[Person]
+  searchMintWardens(text: String): [Person]
 
   getPersonsByRole(role: String): [Person]!
 
@@ -177,6 +187,10 @@ type Query {
 }
 
 type Mutation {
+  addCoinMark(data: NameInput): Void
+  updateCoinMark(data: NameInput): Void
+  deleteCoinMark(id: Int): Void
+
   addHonorific(data: NameInput): Void
   updateHonorific(data: NameInput): Void
   deleteHonorific(id: Int): Void

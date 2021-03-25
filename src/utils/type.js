@@ -280,6 +280,27 @@ class Type {
         return typeList
     }
 
+    static async getTypes() {
+        const result = await Database.manyOrNone(`
+        SELECT t.*, ma.id AS material_id, ma.name AS material_name, mi.id AS mint_id, mi.name AS mint_name, n.id AS nominal_id, n.name AS nominal_name, p.id AS caliph_id, p.name AS caliph_name FROM type t 
+        LEFT JOIN material ma 
+        ON t.material = ma.id
+        LEFT JOIN mint mi 
+        ON t.mint = mi.id
+        LEFT JOIN nominal n 
+        ON t.nominal = n.id
+        LEFT JOIN person p
+        ON t.caliph = p.id
+        `)
+
+
+        for(let [idx, type] of result.entries()){
+            result[idx] = this.postprocessType(type)
+        }
+
+        return result
+    }
+
     static async getType(id) {
         if (!id) throw new Error("Id must be provided!")
 
@@ -298,9 +319,37 @@ class Type {
             throw new Error("Requested type does not exist!")
         })
 
-        if (!result) return {}
+        return await this.postprocessType(result);
+    }
 
-        const type = result
+    static async getTypesByOverlord(person) {
+        if (!person) throw new Error("Person must be provided!")
+        // const result = await Database.one(
+        //     , person).catch(() => {
+        //     throw new Error("Requested type does not exist!")
+        // })
+
+        
+
+
+        const result = await Database.manyOrNone(`
+        WITH blah AS(
+            SELECT type FROM overlord WHERE person = $1
+        )
+        SELECT * FROM type WHERE id IN (SELECT type FROM blah)
+        `, person);
+        
+        for(let [key, value] of result.entries()){
+            result[key] = await this.postprocessType(value)
+        }
+
+
+        return result
+    }
+
+    static async postprocessType(type) {
+
+        if (!type) throw new Error(`Type was not provided!`)
 
         const config = [
             {
@@ -331,7 +380,9 @@ class Type {
         type.avers = this.wrapCoinSideInformation(type, "front_side_")
         type.reverse = this.wrapCoinSideInformation(type, "back_side_")
 
+        console.log(type.id)
         type.overlords = await Type.getOverlordsByType(type.id)
+        console.log(type.overlords)
         type.issuers = await Type.getIssuerByType(type.id)
         type.otherPersons = await Type.getOtherPersonsByType(type.id)
         type.pieces = await Type.getPieces(type.id)
@@ -347,6 +398,7 @@ class Type {
         }
 
         return type
+
     }
 
     static get databaseToGraphQlMap() {
@@ -553,7 +605,7 @@ class Type {
     }
 
     static async getPieces(type_id) {
-       let results =  await Database.manyOrNone(`
+        let results = await Database.manyOrNone(`
         SELECT piece.piece FROM piece
 			WHERE piece.type=$1
         `, type_id)

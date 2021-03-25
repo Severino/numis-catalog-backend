@@ -186,6 +186,10 @@ type Query {
 
   getReducedCoinTypeList(id: ID): [ReducedCoinType]
   getCoinType(id: ID!): CoinType
+
+  getTypesByOverlord(id:ID!):[CoinType] 
+  getTypes:[CoinType]
+
 }
 
 type Mutation {

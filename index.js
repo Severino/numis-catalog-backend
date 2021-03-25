@@ -28,7 +28,7 @@ app.use(cors())
  * get, add, delete, update and list in one convenient utility.
  */
 const resolverClasses = [
-    new Resolver("coinMark", {tableName: "coin_marks"}),
+    new Resolver("coinMark", { tableName: "coin_marks" }),
     new Resolver("material"),
     new MintResolver("mint"),
     new Resolver("title"),
@@ -59,22 +59,28 @@ const resolvers = {
             const searchString = args.text
             const additionalFilter = args.filter || []
             const filter = [" ", "overlord", ...additionalFilter]
-            return Database.any(`SELECT * FROM person WHERE role IS NOT NULL AND (role IN ($2:csv)) IS NOT true AND unaccent(name) ILIKE $1 ORDER BY name ASC`, [`%${searchString}%`, filter]).catch(console.log)
+            return Database.any("SELECT * FROM person WHERE role IS NOT NULL AND (role IN ($2:csv)) IS NOT true AND unaccent(name) ILIKE $1 ORDER BY name ASC", [`%${searchString}%`, filter]).catch(console.log)
         },
         searchPersonsWithoutRole: async function (_, args) {
             const searchString = args.text
-            return Database.any(`SELECT * FROM person WHERE (role IS NULL OR role=' ' OR role='overlord') AND unaccent(name) ILIKE $1 ORDER BY name ASC`, `%${searchString}%`).catch(console.log)
+            return Database.any("SELECT * FROM person WHERE (role IS NULL OR role=' ' OR role='overlord') AND unaccent(name) ILIKE $1 ORDER BY name ASC", `%${searchString}%`).catch(console.log)
         },
         searchMintWardens: async function (_, args) {
             const searchString = args.text
-            return Database.any(`SELECT * FROM person WHERE (role IS NULL OR role=' ' OR role='overlord' OR role='vassal') AND unaccent(name) ILIKE $1 ORDER BY name ASC`, `%${searchString}%`).catch(console.log)
+            return Database.any("SELECT * FROM person WHERE (role IS NULL OR role=' ' OR role='overlord' OR role='vassal') AND unaccent(name) ILIKE $1 ORDER BY name ASC", `%${searchString}%`).catch(console.log)
+        },
+        getTypesByOverlord: async function(_,args){
+            return Type.getTypesByOverlord(args.id)
+        },
+        getTypes: async function(){
+            return Type.getTypes()
         }
     }, Mutation: {
         addCoinType: async function (_, args) {
             return Type.addType(args.data)
         },
         updateCoinType(_, args) {
-            return Type.updateType(args.id, args.data) 
+            return Type.updateType(args.id, args.data)
         }
     }
 }

@@ -38,12 +38,12 @@ class Resolver {
         return this.request(query, [id, ...Object.values(object)])
     }
 
-    async delete(_, args) {
-        return this.request(`DELETE FROM ${this.tableName} WHERE id=$1`, [args.id])
+    async delete(_, args) {       
+        return Database.none(`DELETE FROM ${this.tableName} WHERE id=$1`, [args.id])
     }
 
     async get(_, args) {
-        return Database.one(`SELECT * FROM ${this.tableName} WHERE id=$1 `, [args.id]).catch(console.log)
+        return Database.one(`SELECT * FROM ${this.tableName} WHERE id=$1 `, [args.id])
     }
 
     async list() {
@@ -51,11 +51,11 @@ class Resolver {
     }
 
     async search(_, args) {
-        return Database.any(`SELECT * FROM ${this.tableName} WHERE unaccent(name) ILIKE $1 ORDER BY name ASC`, `%${args.text}%`).catch(console.log)
+        return Database.any(`SELECT * FROM ${this.tableName} WHERE unaccent(name) ILIKE $1 ORDER BY name ASC`, `%${args.text}%`)
     }
 
     async request(query, params = []) {
-        return Database.any(query, params).catch(console.log)
+        return Database.any(query, params)
     }
 }
 

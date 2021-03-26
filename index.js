@@ -69,18 +69,33 @@ const resolvers = {
             const searchString = args.text
             return Database.any("SELECT * FROM person WHERE (role IS NULL OR role=' ' OR role='overlord' OR role='vassal') AND unaccent(name) ILIKE $1 ORDER BY name ASC", `%${searchString}%`).catch(console.log)
         },
-        getTypesByOverlord: async function(_,args){
+        getTypesByOverlord: async function (_, args) {
             return Type.getTypesByOverlord(args.id)
         },
-        getTypes: async function(){
+        getTypes: async function () {
             return Type.getTypes()
+        },
+        getTypeComplete: async function (_, { id = null } = {}) {
+            const result = await Database.one("SELECT exists(SELECT * FROM type_completed WHERE type=$1)", id);
+            console.log(result, result.exists)
+            return result.exists
         }
     }, Mutation: {
         addCoinType: async function (_, args) {
             return Type.addType(args.data)
         },
-        updateCoinType(_, args) {
+        updateCoinType: async function (_, args) {
             return Type.updateType(args.id, args.data)
+        },
+        setTypeComplete: async function (_, {
+            completed = true,
+            id = null
+        } = {}) {
+            if (completed) {
+                return Database.none("INSERT INTO type_completed (type) VALUES ($1) ON CONFLICT DO NOTHING", id)
+            } else {
+                return Database.none("DELETE FROM type_completed WHERE type=$1", id)
+            }
         }
     }
 }

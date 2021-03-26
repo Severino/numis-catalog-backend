@@ -260,21 +260,27 @@ class Type {
     }
 
     static async getTypesReducedList() {
-        let typeList = await Database.any("SELECT id, project_id , treadwell_id  from type")
+        let typeList = await Database.manyOrNone(`SELECT 
+        id, project_id , treadwell_id,
+        CASE 
+            WHEN tc.type IS NULL THEN false
+            ELSE true
+        END AS completed
+        FROM type t
+        LEFT JOIN type_completed tc ON t.id = tc.type
+        ORDER BY project_id
+        `)
 
         const map = {
             project_id: "projectId",
             treadwell_id: "treadwellId"
         }
 
-        typeList.forEach(type => {
+        typeList = typeList.map(type => {
             for (let [key, val] of Object.entries(map)) {
-                if (type[key]) {
-                    const value = type[key]
-                    delete type[key]
-                    type[val] = value
-                }
+                type[val] = type[key]
             }
+            return type
         })
 
         return typeList
@@ -294,7 +300,7 @@ class Type {
         `)
 
 
-        for(let [idx, type] of result.entries()){
+        for (let [idx, type] of result.entries()) {
             result[idx] = this.postprocessType(type)
         }
 
@@ -329,7 +335,7 @@ class Type {
         //     throw new Error("Requested type does not exist!")
         // })
 
-        
+
 
 
         const result = await Database.manyOrNone(`
@@ -338,8 +344,8 @@ class Type {
         )
         SELECT * FROM type WHERE id IN (SELECT type FROM blah)
         `, person);
-        
-        for(let [key, value] of result.entries()){
+
+        for (let [key, value] of result.entries()) {
             result[key] = await this.postprocessType(value)
         }
 

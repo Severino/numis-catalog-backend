@@ -52,7 +52,8 @@ input CoinSideInformationInput {
 type ReducedCoinType {
   id: ID
   projectId: String
-  treadwellId: String
+  treadwellId: String,
+  completed: Boolean
 }
 
 type CoinType {
@@ -190,6 +191,7 @@ type Query {
   getTypesByOverlord(id:ID!):[CoinType] 
   getTypes:[CoinType]
 
+  getTypeComplete(id:ID!):Boolean
 }
 
 type Mutation {
@@ -224,6 +226,8 @@ type Mutation {
   addCoinType(data: CoinTypeInput): Void
   removeCoinType(id: ID): Void
   updateCoinType(id: ID, data: CoinTypeInput): Void
+
+  setTypeComplete(id:ID!, completed:Boolean = true):Void
 }
 
 type Overlord {

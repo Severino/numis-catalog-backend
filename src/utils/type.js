@@ -386,9 +386,7 @@ class Type {
         type.avers = this.wrapCoinSideInformation(type, "front_side_")
         type.reverse = this.wrapCoinSideInformation(type, "back_side_")
 
-        console.log(type.id)
         type.overlords = await Type.getOverlordsByType(type.id)
-        console.log(type.overlords)
         type.issuers = await Type.getIssuerByType(type.id)
         type.otherPersons = await Type.getOtherPersonsByType(type.id)
         type.pieces = await Type.getPieces(type.id)

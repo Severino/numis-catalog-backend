@@ -52,7 +52,6 @@ const resolvers = {
             return Type.getTypesReducedList()
         },
         getCoinType: async function (_, args) {
-            console.log(args.id)
             return Type.getType(args.id)
         },
         searchPersonsWithRole: async function (_, args) {
@@ -77,7 +76,6 @@ const resolvers = {
         },
         getTypeComplete: async function (_, { id = null } = {}) {
             const result = await Database.one("SELECT exists(SELECT * FROM type_completed WHERE type=$1)", id);
-            console.log(result, result.exists)
             return result.exists
         }
     }, Mutation: {

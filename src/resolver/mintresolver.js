@@ -15,7 +15,7 @@ class MintResolver extends Resolver {
     }
 
     async get(_, args) {
-        let p = await Database.one(`SELECT *,ST_X(geometry), ST_Y(geometry) FROM ${this.name} WHERE id=$1`, [args.id]).catch(console.log)
+        let p = await Database.one(`SELECT *,ST_X(geometry), ST_Y(geometry) FROM ${this.name} WHERE id=$1`, [args.id])
 
         p.location = { lat: p.st_x, lon: p.st_y }
         delete p.st_x

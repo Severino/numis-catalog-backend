@@ -32,9 +32,11 @@ const resolverClasses = [
     new Resolver("material"),
     new MintResolver("mint"),
     new Resolver("title"),
-    new PersonResolver("person"),
+    new PersonResolver(),
     new Resolver("honorific"),
-    new Resolver("nominal")
+    new Resolver("nominal"),
+    new Resolver("dynasty"),
+    new Resolver("role", {tableName: "person_role"})
 ]
 
 

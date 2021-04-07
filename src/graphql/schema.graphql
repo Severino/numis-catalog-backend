@@ -13,7 +13,9 @@ input NameInput {
 input PersonInput {
   id: ID
   name: String
-  role: String
+  shortName: String
+  role: ID
+  dynasty: ID
 }
 
 type Location {
@@ -52,7 +54,7 @@ input CoinSideInformationInput {
 type ReducedCoinType {
   id: ID
   projectId: String
-  treadwellId: String,
+  treadwellId: String
   completed: Boolean
 }
 
@@ -79,7 +81,7 @@ type CoinType {
   pieces: [String]
   specials: String
   excludeFromTypeCatalogue: Boolean
-  excludeFromMapApp: Boolean,
+  excludeFromMapApp: Boolean
   internalNotes: String
 }
 
@@ -106,7 +108,7 @@ input CoinTypeInput {
   pieces: [String] = []
   specials: String = ""
   excludeFromTypeCatalogue: Boolean
-  excludeFromMapApp: Boolean,
+  excludeFromMapApp: Boolean
   internalNotes: String
 }
 
@@ -125,7 +127,19 @@ type Mint {
 type Person {
   id: ID!
   name: String!
-  role: String
+  shortName: String
+  role: Role
+  dynasty: Dynasty
+}
+
+type Role {
+  id: ID
+  name: String
+}
+
+type Dynasty {
+  id: ID
+  name: String
 }
 
 input TitledPersonInput {
@@ -159,17 +173,21 @@ type Query {
   honorific: [Honorific]!
   title: [Title]!
   mint: [Mint]!
+  dynasty: [Dynasty]!
+  role: [Role]
 
-  searchCoinMark(text: String): [CoinMark]
-  searchHonorific(text: String): [Honorific]
-  searchMaterial(text: String): [Material]
-  searchMint(text: String): [Mint]
-  searchTitle(text: String): [Title]
-  searchNominal(text: String): [Nominal]
-  searchPerson(text: String): [Person]
+  searchCoinMark(text: String): [CoinMark]!
+  searchHonorific(text: String): [Honorific]!
+  searchMaterial(text: String): [Material]!
+  searchMint(text: String): [Mint]!
+  searchTitle(text: String): [Title]!
+  searchNominal(text: String): [Nominal]!
+  searchPerson(text: String): [Person]!
+  searchDynasty(text: String): [Dynasty]!
+  searchRole(text: String): [Role]!
 
-  searchPersonsWithRole(text: String!, filter: [String]): [Person]
-  searchPersonsWithoutRole(text: String!): [Person]
+  searchPersonsWithRole(text: String!, filter: [String]): [Person]!
+  searchPersonsWithoutRole(text: String!): [Person]!
 
   getCoinMark(id: Int!): CoinMark
   getHonorific(id: Int!): Honorific
@@ -178,6 +196,8 @@ type Query {
   getPerson(id: Int!): Person
   getTitle(id: Int!): Title
   getNominal(id: Int!): Nominal
+  getDynasty(id: Int!): Dynasty
+  getRole(id: Int!): Role
 
   searchMintWardens(text: String): [Person]
 
@@ -188,10 +208,10 @@ type Query {
   getReducedCoinTypeList(id: ID): [ReducedCoinType]
   getCoinType(id: ID!): CoinType
 
-  getTypesByOverlord(id:ID!):[CoinType] 
-  getTypes:[CoinType]
+  getTypesByOverlord(id: ID!): [CoinType]
+  getTypes: [CoinType]
 
-  getTypeComplete(id:ID!):Boolean
+  getTypeComplete(id: ID!): Boolean
 }
 
 type Mutation {
@@ -223,11 +243,19 @@ type Mutation {
   updateNominal(data: NameInput): Void
   deleteNominal(id: Int): Void
 
+  addDynasty(data: NameInput): Void
+  updateDynasty(data: NameInput): Void
+  deleteDynasty(id: Int): Void
+
+  addRole(data: NameInput): Void
+  updateRole(data: NameInput): Void
+  deleteRole(id: Int): Void
+
   addCoinType(data: CoinTypeInput): Void
   removeCoinType(id: ID): Void
   updateCoinType(id: ID, data: CoinTypeInput): Void
 
-  setTypeComplete(id:ID!, completed:Boolean = true):Void
+  setTypeComplete(id: ID!, completed: Boolean = true): Void
 }
 
 type Overlord {

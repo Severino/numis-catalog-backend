@@ -342,7 +342,16 @@ class Type {
         WITH blah AS(
             SELECT type FROM overlord WHERE person = $1
         )
-        SELECT * FROM type WHERE id IN (SELECT type FROM blah)
+        SELECT t.*, ma.id AS material_id, ma.name AS material_name, mi.id AS mint_id, mi.name AS mint_name, n.id AS nominal_id, n.name AS nominal_name, p.id AS caliph_id, p.name AS caliph_name FROM type t 
+        LEFT JOIN material ma 
+        ON t.material = ma.id
+        LEFT JOIN mint mi 
+        ON t.mint = mi.id
+        LEFT JOIN nominal n 
+        ON t.nominal = n.id
+        LEFT JOIN person p
+        ON t.caliph = p.id
+        WHERE t.id IN (SELECT type FROM blah)
         `, person);
 
         for (let [key, value] of result.entries()) {

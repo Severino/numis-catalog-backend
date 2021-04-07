@@ -9,14 +9,17 @@ class PersonResolver extends Resolver {
         super("person")
     }
 
-    async add(_, args){
+    async add(_, args) {
         args.data = transformPropertyToSnakeCase(args.data, "shortName")
         return super.add(_, args)
     }
 
-    async update(_, args){
+    async update(_, args) {
+
         SQLUtils.removeNullProperty(args, "dynasty")
         SQLUtils.removeNullProperty(args, "role")
+        args.data = transformPropertyToSnakeCase(args.data, "shortName")
+
 
         return super.update(_, args)
     }
@@ -33,7 +36,7 @@ class PersonResolver extends Resolver {
         ORDER BY name ASC
         `, {
             table: this.tableName,
-            id:args.id
+            id: args.id
         })
 
         return this.decomposePersonResult(result)

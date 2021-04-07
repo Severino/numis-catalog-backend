@@ -33,6 +33,9 @@ class Resolver {
     async update(_, args) {
         const object = args.data
         const id = object.id
+
+        if(!id || id <= 0) throw new Error("error.invalid_id")
+
         delete object.id
         const query = `UPDATE ${this.tableName} SET ${Object.keys(object).map((val, idx) => `${val}=$${idx + 2}`)} WHERE id=$1`
         return this.request(query, [id, ...Object.values(object)])

@@ -62,7 +62,7 @@ class SQLUtils {
             if (obj[config.prefix + key]) {
                 obj[config.target][key] = obj[config.prefix + key]
                 delete obj[config.prefix + key]
-            } else console.error(`Key '${key}' was not found on object:\n${JSON.stringify(obj)}`)
+            } else console.error(`Key '${config.prefix + key}' was not found on object:\n${JSON.stringify(obj)}`)
         })
         return obj
     }

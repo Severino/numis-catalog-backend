@@ -59,7 +59,7 @@ The database can be managed using the pre-installed User-Interface of *pgAdmin*.
 
 ```
 npm run init
-```
+``` 
 
 ### Defining environment variables
 
@@ -120,3 +120,18 @@ To run the backend application in an apache environment, we need to use the apac
 
 The endpoint is found at *<your_server>:<port>/graphql
 
+
+# Database
+
+To save the database on the current testserver (IKMK/severin) run the following command:
+
+```cmd
+cd /usr/pgsql-13/bin
+./pg_dump -h 127.0.0.1 -U postgres  buya_data > ~/export.sql
+```
+
+To import it back into a test database or to restore a backup, run
+
+```cmd
+psql.exe -U postgres -h 127.0.0.1 coins < export.sql
+```

@@ -9,7 +9,7 @@ async function main() {
     const regex = /\((.+?)(\)|,)/
 
     rows.forEach((row, idx) => {
-        const result = regex.exec(row.name)
+        let result = regex.exec(row.name)
         if (!result) console.log(`No dynastie found on row with id '${row.id}' with name '${row.name}'.`)
         else {
 
@@ -25,10 +25,31 @@ async function main() {
         return { name: el }
     })
 
-    const insertQuery = pgp.helpers.insert(dynasties, ["name"], "dynasty") + " ON CONFLICT DO NOTHING RETURNING id, name"
-    let inserted = await Database.manyOrNone(insertQuery)
+    const insertQuery = pgp.helpers.insert(dynasties, ["name"], "dynasty") + " ON CONFLICT DO NOTHING"
+    await Database.manyOrNone(insertQuery)
 
 
+
+
+    let existingDynasties = await Database.manyOrNone("SELECT id, name FROM dynasty")
+
+    let dynastieMap = {}
+    existingDynasties.forEach(row => {
+        dynastieMap[row.name] = row.id
+    })
+    console.log(dynastieMap)
+
+
+    for (let row of rows.values()) {
+        console.log(row)
+        let result = regex.exec(row.name)
+        if (result) {
+            const dynasty = result[1]
+            const index = dynastieMap[dynasty]
+            await Database.none("UPDATE person SET dynasty = $1 WHERE id=$2", [index, row.id])
+            console.log(`Updated dynasty on ${row.name}(${row.id}) to ${dynasty}(${index}).`)
+        } else console.log(`Skipped ${row.name}(${row.id}). No match was found.`)
+    }
 
 }
 

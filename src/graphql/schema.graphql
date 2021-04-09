@@ -1,8 +1,8 @@
 scalar Void
 
 type Material {
-  id: ID!
-  name: String!
+  id: ID
+  name: String
 }
 
 input NameInput {
@@ -113,20 +113,20 @@ input CoinTypeInput {
 }
 
 type CoinMark {
-  id: ID!
+  id: ID
   name: String
 }
 
 type Mint {
-  id: ID!
+  id: ID
   name: String
   location: Location
   uncertain: Boolean
 }
 
 type Person {
-  id: ID!
-  name: String!
+  id: ID
+  name: String
   shortName: String
   role: Role
   dynasty: Dynasty
@@ -149,17 +149,17 @@ input TitledPersonInput {
 }
 
 type Title {
-  id: ID!
+  id: ID
   name: String!
 }
 
 type Honorific {
-  id: ID!
+  id: ID
   name: String!
 }
 
 type Nominal {
-  id: ID!
+  id: ID
   name: String!
 }
 
@@ -186,7 +186,7 @@ type Query {
   searchDynasty(text: String): [Dynasty]!
   searchRole(text: String): [Role]!
 
-  searchPersonsWithRole(text: String!, filter: [String]): [Person]!
+  searchPersonsWithRole(text: String!, include: [String], exclude: [String]): [Person]!
   searchPersonsWithoutRole(text: String!): [Person]!
 
   getCoinMark(id: Int!): CoinMark
@@ -199,9 +199,6 @@ type Query {
   getDynasty(id: Int!): Dynasty
   getRole(id: Int!): Role
 
-  searchMintWardens(text: String): [Person]
-
-  getPersonsByRole(role: String): [Person]!
 
   getOverlord(id: ID!): Overlord
 

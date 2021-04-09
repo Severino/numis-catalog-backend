@@ -62,7 +62,7 @@ class SQLUtils {
             if (obj[config.prefix + key]) {
                 obj[config.target][key] = obj[config.prefix + key]
                 delete obj[config.prefix + key]
-            }
+            } else console.error(`Key '${key}' was not found on object:\n${JSON.stringify(obj)}`)
         })
         return obj
     }
@@ -86,14 +86,14 @@ class SQLUtils {
         })
     }
 
-    static transformPropertyToSnakeCase(obj, property){
+    static transformPropertyToSnakeCase(obj, property) {
         let snakeCase = SQLUtils.camelCaseToSnakeCase(property)
         obj[snakeCase] = obj[property]
         delete obj[property]
         return obj
     }
 
-    static camelCaseToSnakeCase(str){
+    static camelCaseToSnakeCase(str) {
         return str.replace(/[A-Z]/g, (match) => {
             return `_${match.toLowerCase()}`
         })

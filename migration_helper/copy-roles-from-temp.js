@@ -1,28 +1,39 @@
 const { Database, pgp } = require("../src/utils/database.js")
 
+async function createDefaultRoles() {
+
+    const roles = [
+        "cutter",
+        "heir",
+        "warden",
+        "caliph",
+    ]
+
+    const roleInsertArray = roles.map(role => { return { name: role } })
+    const query = pgp.helpers.insert(roleInsertArray, ["name"], "person_role")
+    return await Database.none(query)
+}
+
 // "person", "role", "role_legacy
 async function main() {
+
+    await createDefaultRoles()
+
     let rows = await Database.manyOrNone("SELECT id, role_legacy FROM person")
     let roles = await Database.many("SELECT id, name FROM person_role")
 
-    console.log(roles)
     const roleMap = {}
     roles.forEach(role => {
 
-
-        if (roleMap[role.name] == null) {
+        if (role.name != "overlord" && roleMap[role.name] == null) {
             roleMap[role.name] = role.id
         }
     })
 
+    rows = rows.filter(row => (row.role_legacy != null && row.role_legacy != "overlord"))
+
     rows = rows.map(row => {
-
-        /** All that have no role are overlords! */
-        if (row.role_legacy == null)
-            row.role_legacy = "overlord"
-
         let role = (roleMap[row.role_legacy] == null) ? null : roleMap[row.role_legacy]
-
         if (!role) console.error(`Mistake on role "${row.role_legacy}" of element with id "${row.id}".`)
 
         return {

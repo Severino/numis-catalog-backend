@@ -42,7 +42,7 @@ const resolverClasses = [
     new Resolver("honorific"),
     new Resolver("nominal"),
     new Resolver("dynasty"),
-    new Resolver("role", {tableName: "person_role"})
+    new Resolver("role", { tableName: "person_role" })
 ]
 
 
@@ -63,18 +63,53 @@ const resolvers = {
             return Type.getType(args.id)
         },
         searchPersonsWithRole: async function (_, args) {
-            const searchString = args.text
-            const additionalFilter = args.filter || []
-            const filter = [" ", "overlord", ...additionalFilter]
-            return Database.any("SELECT * FROM person WHERE role IS NOT NULL AND (role IN ($2:csv)) IS NOT true AND unaccent(name) ILIKE $1 ORDER BY name ASC", [`%${searchString}%`, filter]).catch(console.log)
+
+            const include = args.include
+            const exclude = args.exclude
+            const search = `%${args.text}`
+
+            const baseQuery = `SELECT p.*, p.role AS role_id, r.name AS role_name FROM person p
+            LEFT JOIN person_role r ON p.role = r.id
+            WHERE r IS NOT NULL 
+            AND unaccent(p.name) ILIKE $1`
+            
+            let result
+            if (include) {
+                result = await Database.manyOrNone(`
+                ${baseQuery}
+                AND r.name IN ($2:list) IS true
+                ORDER BY p.name ASC
+                `, [search, include])
+            } else {
+                result = await Database.manyOrNone(`
+                ${baseQuery}
+                AND r.name IN ($2:list) IS NOT true
+                ORDER BY p.name ASC
+            `, [search, exclude])
+            }
+
+            result.forEach((item, idx) => {
+                result[idx] = SQLUtils.objectify(item, {
+                    prefix: "role_",
+                    target: "role",
+                    keys: ["id", "name"]
+                })
+            })
+
+            return result
         },
         searchPersonsWithoutRole: async function (_, args) {
             const searchString = args.text
-            return Database.any("SELECT * FROM person WHERE (role IS NULL OR role=' ' OR role='overlord') AND unaccent(name) ILIKE $1 ORDER BY name ASC", `%${searchString}%`).catch(console.log)
-        },
-        searchMintWardens: async function (_, args) {
-            const searchString = args.text
-            return Database.any("SELECT * FROM person WHERE (role IS NULL OR role=' ' OR role='overlord' OR role='vassal') AND unaccent(name) ILIKE $1 ORDER BY name ASC", `%${searchString}%`).catch(console.log)
+            let result = await Database.manyOrNone(`
+            SELECT * FROM person WHERE role IS NULL AND unaccent(name) ILIKE $1 ORDER BY name ASC
+            
+            `, `%${searchString}%`)
+
+            result.forEach((item, idx) => {
+                result[idx]["role"] = { id: null, name: null }
+            })
+
+            return result
         },
         getTypesByOverlord: async function (_, args) {
             return Type.getTypesByOverlord(args.id)

@@ -6,18 +6,51 @@ async function main() {
 
     let dynasties = []
 
-    const insideBrackedMatch = /\((.+?)\)/g
+    const regex = /\((.+?)(\)|,)/
 
-    rows.forEach(row => {
-        let match = insideBrackedMatch.exec(row.name)
-        if (match) {
-            console.log(match[1])
-        } else { 
-            console.error("Could not match the dynastie: ", match) 
+    rows.forEach((row, idx) => {
+        let result = regex.exec(row.name)
+        if (!result) console.log(`No dynastie found on row with id '${row.id}' with name '${row.name}'.`)
+        else {
+
+            const dynasty = result[1]
+            rows[idx].dynasty = dynasty
+            if (dynasties.indexOf(dynasty) == -1) {
+                dynasties.push(dynasty)
+            }
         }
     })
 
-    // console.log(rows)
+    dynasties = dynasties.map((el) => {
+        return { name: el }
+    })
+
+    const insertQuery = pgp.helpers.insert(dynasties, ["name"], "dynasty") + " ON CONFLICT DO NOTHING"
+    await Database.manyOrNone(insertQuery)
+
+
+
+
+    let existingDynasties = await Database.manyOrNone("SELECT id, name FROM dynasty")
+
+    let dynastieMap = {}
+    existingDynasties.forEach(row => {
+        dynastieMap[row.name] = row.id
+    })
+    console.log(dynastieMap)
+
+
+    for (let row of rows.values()) {
+        console.log(row)
+        let result = regex.exec(row.name)
+        if (result) {
+            const dynasty = result[1]
+            const index = dynastieMap[dynasty]
+            await Database.none("UPDATE person SET dynasty = $1 WHERE id=$2", [index, row.id])
+            console.log(`Updated dynasty on ${row.name}(${row.id}) to ${dynasty}(${index}).`)
+        } else console.log(`Skipped ${row.name}(${row.id}). No match was found.`)
+    }
+
 }
 
 
